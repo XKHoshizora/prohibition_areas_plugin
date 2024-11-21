@@ -1,0 +1,5 @@
+<library path="lib/libmap_restriction_plugin_rviz_plugins">
+    <class name="map_restriction_plugin/DrawTool" type="map_restriction_plugin::DrawTool" base_class_type="rviz::Tool">
+        <description>Tool for drawing map restrictions</description>
+    </class>
+</library>

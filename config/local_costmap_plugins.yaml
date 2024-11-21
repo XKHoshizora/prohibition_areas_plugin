@@ -1,0 +1,9 @@
+# config/local_costmap_plugins.yaml
+plugins:
+  - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+  - {name: restriction_layer, type: "map_restriction_plugin/RestrictionLayer"}
+  - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+restriction_layer:
+  enabled: true
+  config_file: $(find map_restriction_plugin)/config/restrictions.yaml

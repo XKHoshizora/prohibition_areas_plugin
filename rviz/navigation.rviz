@@ -1,0 +1,30 @@
+# rviz/navigation.rviz
+Panels:
+  - Class: rviz/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Status1
+        - /Map1
+        - /Costmap1
+      Splitter Ratio: 0.5
+    Tree Height: 565
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Nav Goal1
+      - /DrawRestriction1
+    Name: Tool Properties
+    Splitter Ratio: 0.588679
+Tools:
+  - Class: rviz/DrawRestriction
+    Name: DrawRestriction
+  - Class: rviz/Interact
+  - Class: rviz/MoveCamera
+  - Class: rviz/Select
+  - Class: rviz/SetInitialPose
+  - Class: rviz/SetGoal
+    Topic: /move_base_simple/goal
