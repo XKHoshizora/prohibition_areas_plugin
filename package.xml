@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>restricted_areas_plugin</name>
+  <name>prohibition_areas_plugin</name>
   <version>0.1.0</version>
   <description>ROS包,提供用于在代价地图中定义和可视化禁区的插件</description>
 

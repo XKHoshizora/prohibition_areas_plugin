@@ -1,6 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-  <qresource prefix="/map_restriction_plugin">
+  <qresource prefix="/prohibition_areas_plugin">
     <!-- 类图标 -->
     <file>../icons/classes/restricted_area.svg</file>
 

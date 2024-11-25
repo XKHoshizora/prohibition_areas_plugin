@@ -1,1 +1,1 @@
-# map_restriction_plugin
+# prohibition_areas_plugin

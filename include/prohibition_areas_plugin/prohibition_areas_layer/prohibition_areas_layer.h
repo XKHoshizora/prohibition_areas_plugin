@@ -47,34 +47,34 @@
 #include <ros/ros.h>
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
-#include <costmap_prohibition_layer/CostmapProhibitionLayerConfig.h>
+#include <prohibition_areas_plugin/ProhibitionAreasLayerConfig.h>
 #include <dynamic_reconfigure/server.h>
 
 #include <unordered_map>
 
-namespace costmap_prohibition_layer_namespace
+namespace prohibition_areas_layer
 {
-    
-// point with integer coordinates  
+
+// point with integer coordinates
 struct PointInt
 {
     int x;
     int y;
 };
-    
-class CostmapProhibitionLayer : public costmap_2d::Layer
+
+class ProhibitionAreasLayer : public costmap_2d::Layer
 {
 public:
-    
+
   /**
    * default constructor
    */
-  CostmapProhibitionLayer();
+  ProhibitionAreasLayer();
 
   /**
    * destructor
    */
-  virtual ~CostmapProhibitionLayer();
+  virtual ~ProhibitionAreasLayer();
   /**
    * function which get called at initializing the costmap
    * define the reconfige callback, get the reoslution
@@ -85,11 +85,11 @@ public:
   /**
    * This is called by the LayeredCostmap to poll this plugin
    * as to how much of the costmap it needs to update.
-   * Each layer can increase the size of this bounds. 
+   * Each layer can increase the size of this bounds.
    */
-  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, 
+  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw,
                             double *min_x, double *min_y, double *max_x, double *max_y);
-  
+
   /**
    * function which get called at every cost updating procdure
    * of the overlayed costmap. The before readed costs will get
@@ -99,21 +99,21 @@ public:
                            int max_i, int max_j);
 
 private:
-    
+
   /**
    * overlayed reconfigure callback function
    */
-  void reconfigureCB(CostmapProhibitionLayerConfig& config, uint32_t level);
+  void reconfigureCB(ProhibitionAreasLayerConfig& config, uint32_t level);
 
   /**
    * Compute bounds in world coordinates for the current set of points and polygons.
    * The result is stored in class members _min_x, _min_y, _max_x and _max_y.
-   */ 
+   */
   void computeMapBounds();
-  
+
   /**
    * Set cost in a Costmap2D for a polygon (polygon may be located outside bounds)
-   * 
+   *
    * @param master_grid    reference to the Costmap2D object
    * @param polygon        polygon defined by a vector of points (in world coordinates)
    * @param cost           the cost value to be set (0,255)
@@ -121,42 +121,42 @@ private:
    * @param min_j          minimum bound on the vertical map index/coordinate
    * @param max_i          maximum bound on the horizontal map index/coordinate
    * @param max_j          maximum bound on the vertical map index/coordinate
-   * @param fill_polygon   if true, tue cost for the interior of the polygon will be set as well    
+   * @param fill_polygon   if true, tue cost for the interior of the polygon will be set as well
    */
   void setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::vector<geometry_msgs::Point>& polygon,
                       unsigned char cost, int min_i, int min_j, int max_i, int max_j, bool fill_polygon);
-  
+
   /**
    * Convert polygon (in map coordinates) to a set of cells in the map
-   * 
+   *
    * @remarks This method is mainly based on Costmap2D::convexFillCells() but accounts
    *          for a self-implemented polygonOutlineCells() method and allows negative map coordinates
-   * 
+   *
    * @param polygon             polygon defined  by a vector of map coordinates
    * @param[out] polygon_cells  new cells in map coordinates are pushed back on this container
    * @param fill                if true, the interior of the polygon will be considered as well
    */
   void rasterizePolygon(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells, bool fill);
-  
+
   /**
    * Extract the boundary of a polygon in terms of map cells
-   * 
+   *
    * @remarks This method is based on Costmap2D::polygonOutlineCells() but accounts
    *          for a self-implemented raytrace algorithm and allows negative map coordinates
-   * 
+   *
    * @param polygon             polygon defined  by a vector of map coordinates
    * @param[out] polygon_cells  new cells in map coordinates are pushed back on this container
    */
   void polygonOutlineCells(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells);
-  
+
   /**
    * Rasterize line between two map coordinates into a set of cells
-   * 
-   * @remarks Since Costmap2D::raytraceLine() is based on the size_x and since we want to rasterize 
+   *
+   * @remarks Since Costmap2D::raytraceLine() is based on the size_x and since we want to rasterize
    *          polygons that might also be located outside map bounds we provide a modified raytrace
    *          implementation (also Bresenham) based on the integer version presented here:
    *          http://playtechs.blogspot.de/2007/03/raytracing-on-grid.html
-   * 
+   *
    * @param x0          line start x-coordinate (map frame)
    * @param y0          line start y-coordinate (map frame)
    * @param x1          line end x-coordinate (map frame)
@@ -165,7 +165,7 @@ private:
    */
   void raytrace(int x0, int y0, int x1, int y1, std::vector<PointInt>& cells);
 
-  
+
   /**
    * read the prohibition areas in YAML-Format from the
    * ROS parameter server in the namespace of this
@@ -193,7 +193,7 @@ private:
   */
   bool getPoint(XmlRpc::XmlRpcValue& val, geometry_msgs::Point& point);
 
-  dynamic_reconfigure::Server<CostmapProhibitionLayerConfig>* _dsrv;            //!< dynamic_reconfigure server for the costmap
+  dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>* _dsrv;            //!< dynamic_reconfigure server for the costmap
   std::mutex _data_mutex;                                                       //!< mutex for the accessing _prohibition_points and _prohibition_polygons
   double _costmap_resolution;                                                   //!< resolution of the overlayed costmap to create the thinnest line out of two points
   bool _fill_polygons;                                                          //!< if true, all cells that are located in the interior of polygons are marked as obstacle as well

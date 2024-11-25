@@ -1,11 +1,11 @@
 global_costmap:
   plugins:
     - {name: static_layer, type: "costmap_2d::StaticLayer"}
-    - {name: restricted_areas, type: "restricted_areas_plugin::RestrictedAreasLayer"}  # 禁区层
+    - {name: restricted_areas, type: "prohibition_areas_layer::ProhibitionAreasLayer"}  # 禁区层
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
   # 禁区层配置
   restricted_areas:
     enabled: true               # 是否启用禁区层
     fill_polygons: true        # 是否填充禁区
-    data_file: "$(find restricted_areas_plugin)/config/restricted_areas.yaml"  # 可选，默认在功能包config目录下
+    data_file: "$(find prohibition_areas_plugin)/prohibition_areas/prohibition_areas.yaml"  # 可选，默认在功能包config目录下

@@ -36,34 +36,34 @@
  * Author: Stephan Kurzawe
  *********************************************************************/
 
-#include <costmap_prohibition_layer/costmap_prohibition_layer.h>
+#include <prohibition_areas_plugin/prohibition_areas_layer/prohibition_areas_layer.h>
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(costmap_prohibition_layer_namespace::CostmapProhibitionLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(prohibition_areas_layer::ProhibitionAreasLayer, costmap_2d::Layer)
 
 using costmap_2d::LETHAL_OBSTACLE;
 
-namespace costmap_prohibition_layer_namespace
+namespace prohibition_areas_layer
 {
-    
-CostmapProhibitionLayer::CostmapProhibitionLayer() : _dsrv(NULL)
+
+ProhibitionAreasLayer::ProhibitionAreasLayer() : _dsrv(NULL)
 {
 }
 
-CostmapProhibitionLayer::~CostmapProhibitionLayer()
+ProhibitionAreasLayer::~ProhibitionAreasLayer()
 {
     if (_dsrv!=NULL)
         delete _dsrv;
 }
 
-void CostmapProhibitionLayer::onInitialize()
+void ProhibitionAreasLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_);
   current_ = true;
 
-  _dsrv = new dynamic_reconfigure::Server<CostmapProhibitionLayerConfig>(nh);
-  dynamic_reconfigure::Server<CostmapProhibitionLayerConfig>::CallbackType cb =
-      boost::bind(&CostmapProhibitionLayer::reconfigureCB, this, _1, _2);
+  _dsrv = new dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>(nh);
+  dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>::CallbackType cb =
+      boost::bind(&ProhibitionAreasLayer::reconfigureCB, this, _1, _2);
   _dsrv->setCallback(cb);
 
   // get a pointer to the layered costmap and save resolution
@@ -72,37 +72,37 @@ void CostmapProhibitionLayer::onInitialize()
 
   // set initial bounds
   _min_x = _min_y = _max_x = _max_y = 0;
-  
+
   // reading the prohibition areas out of the namespace of this plugin!
   // e.g.: "move_base/global_costmap/prohibition_layer/prohibition_areas"
   std::string params = "prohibition_areas";
   if (!parseProhibitionListFromYaml(&nh, params))
     ROS_ERROR_STREAM("Reading prohibition areas from '" << nh.getNamespace() << "/" << params << "' failed!");
-  
+
   _fill_polygons = true;
   nh.param("fill_polygons", _fill_polygons, _fill_polygons);
-  
+
   // compute map bounds for the current set of prohibition areas.
   computeMapBounds();
-  
-  ROS_INFO("CostmapProhibitionLayer initialized.");
+
+  ROS_INFO("ProhibitionAreasLayer initialized.");
 }
 
-void CostmapProhibitionLayer::reconfigureCB(CostmapProhibitionLayerConfig &config, uint32_t level)
+void ProhibitionAreasLayer::reconfigureCB(ProhibitionAreasLayerConfig &config, uint32_t level)
 {
   enabled_ = config.enabled;
   _fill_polygons = config.fill_polygons;
 }
 
 
-void CostmapProhibitionLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, 
+void ProhibitionAreasLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
                                            double *min_x, double *min_y, double *max_x, double *max_y)
 {
     if (!enabled_)
         return;
-    
+
     std::lock_guard<std::mutex> l(_data_mutex);
-    
+
     if (_prohibition_points.empty() && _prohibition_polygons.empty())
         return;
 
@@ -113,19 +113,19 @@ void CostmapProhibitionLayer::updateBounds(double robot_x, double robot_y, doubl
 
 }
 
-void CostmapProhibitionLayer::updateCosts(costmap_2d::Costmap2D &master_grid, int min_i, int min_j, int max_i, int max_j)
+void ProhibitionAreasLayer::updateCosts(costmap_2d::Costmap2D &master_grid, int min_i, int min_j, int max_i, int max_j)
 {
   if (!enabled_)
     return;
 
   std::lock_guard<std::mutex> l(_data_mutex);
-  
+
   // set costs of polygons
   for (int i = 0; i < _prohibition_polygons.size(); ++i)
   {
       setPolygonCost(master_grid, _prohibition_polygons[i], LETHAL_OBSTACLE, min_i, min_j, max_i, max_j, _fill_polygons);
   }
-      
+
   // set cost of points
   for (int i = 0; i < _prohibition_points.size(); ++i)
   {
@@ -138,13 +138,13 @@ void CostmapProhibitionLayer::updateCosts(costmap_2d::Costmap2D &master_grid, in
   }
 }
 
-void CostmapProhibitionLayer::computeMapBounds()
+void ProhibitionAreasLayer::computeMapBounds()
 {
   std::lock_guard<std::mutex> l(_data_mutex);
-    
+
   // reset bounds
   _min_x = _min_y = _max_x = _max_y = 0;
-    
+
   // iterate polygons
   for (int i = 0; i < _prohibition_polygons.size(); ++i)
   {
@@ -172,7 +172,7 @@ void CostmapProhibitionLayer::computeMapBounds()
 }
 
 
-void CostmapProhibitionLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::vector<geometry_msgs::Point>& polygon, unsigned char cost,
+void ProhibitionAreasLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::vector<geometry_msgs::Point>& polygon, unsigned char cost,
                                              int min_i, int min_j, int max_i, int max_j, bool fill_polygon)
 {
     std::vector<PointInt> map_polygon;
@@ -203,7 +203,7 @@ void CostmapProhibitionLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid,
 }
 
 
-void CostmapProhibitionLayer::polygonOutlineCells(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells)
+void ProhibitionAreasLayer::polygonOutlineCells(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells)
   {
      for (unsigned int i = 0; i < polygon.size() - 1; ++i)
      {
@@ -217,7 +217,7 @@ void CostmapProhibitionLayer::polygonOutlineCells(const std::vector<PointInt>& p
      }
   }
 
-void CostmapProhibitionLayer::raytrace(int x0, int y0, int x1, int y1, std::vector<PointInt>& cells)
+void ProhibitionAreasLayer::raytrace(int x0, int y0, int x1, int y1, std::vector<PointInt>& cells)
 {
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
@@ -230,7 +230,7 @@ void CostmapProhibitionLayer::raytrace(int x0, int y0, int x1, int y1, std::vect
     int error = dx - dy;
     dx *= 2;
     dy *= 2;
-        
+
     for (; n > 0; --n)
     {
         cells.push_back(pt);
@@ -249,7 +249,7 @@ void CostmapProhibitionLayer::raytrace(int x0, int y0, int x1, int y1, std::vect
 }
 
 
-void CostmapProhibitionLayer::rasterizePolygon(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells, bool fill)
+void ProhibitionAreasLayer::rasterizePolygon(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells, bool fill)
 {
     // this implementation is a slighly modified version of Costmap2D::convexFillCells(...)
 
@@ -326,7 +326,7 @@ void CostmapProhibitionLayer::rasterizePolygon(const std::vector<PointInt>& poly
   }
 
 // load prohibition positions out of the rosparam server
-bool CostmapProhibitionLayer::parseProhibitionListFromYaml(ros::NodeHandle *nhandle, const std::string &param)
+bool ProhibitionAreasLayer::parseProhibitionListFromYaml(ros::NodeHandle *nhandle, const std::string &param)
 {
   std::lock_guard<std::mutex> l(_data_mutex);
   std::unordered_map<std::string, geometry_msgs::Pose> map_out;
@@ -439,7 +439,7 @@ bool CostmapProhibitionLayer::parseProhibitionListFromYaml(ros::NodeHandle *nhan
 }
 
 // get a point out of the XML Type into a geometry_msgs::Point
-bool CostmapProhibitionLayer::getPoint(XmlRpc::XmlRpcValue &val, geometry_msgs::Point &point)
+bool ProhibitionAreasLayer::getPoint(XmlRpc::XmlRpcValue &val, geometry_msgs::Point &point)
 {
   try
   {

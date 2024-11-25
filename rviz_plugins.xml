@@ -1,17 +1,9 @@
-<library path="lib/librestricted_areas_plugin_rviz">
-  <class name="restricted_areas_plugin/RestrictedAreasDisplay"
-         type="restricted_areas_plugin::RestrictedAreasDisplay"
-         base_class_type="rviz::Display">
-    <description>用于显示禁区的RViz显示插件</description>
-    <!-- 添加显示插件图标 -->
-    <icon type="file">icons/classes/restricted_area.svg</icon>
-  </class>
-
-  <class name="restricted_areas_plugin/RestrictedAreasTool"
-         type="restricted_areas_plugin::RestrictedAreasTool"
+<library path="lib/libprohibition_areas_tool">
+  <class name="prohibition_areas_tool/ProhibitionAreasTool"
+         type="prohibition_areas_tool::ProhibitionAreasTool"
          base_class_type="rviz::Tool">
-    <description>用于绘制禁区的RViz工具插件</description>
+    <description>用于显示和绘制禁区的RViz工具插件</description>
     <!-- 添加工具栏图标 -->
-    <icon type="file">icons/toolbar/new_area.svg</icon>
+    <icon type="file">icons/classes/restricted_area.svg</icon>
   </class>
 </library>

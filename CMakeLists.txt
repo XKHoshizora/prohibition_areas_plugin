@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(restricted_areas_plugin)
-
-# 查找Qt5依赖项
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+project(prohibition_areas_plugin)
 
 # 查找ROS依赖包
 find_package(catkin REQUIRED COMPONENTS
@@ -17,22 +14,28 @@ find_package(catkin REQUIRED COMPONENTS
   rospack
 )
 
+# 查找其他依赖项
 find_package(yaml-cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 
 # 生成动态配置API
 generate_dynamic_reconfigure_options(
-  config/RestrictedAreas.cfg
-  config/CostmapProhibitionLayer.cfg  # 代价地图插件
+  config/ProhibitionAreasLayer.cfg  # 代价地图插件配置
+)
+
+# Qt资源文件编译
+set(CMAKE_AUTORCC ON)
+set(RESOURCES_FILES
+  resources/prohibition_areas_plugin.qrc
 )
 
 # 设置catkin构建信息
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES costmap_prohibition_layer ${PROJECT_NAME}_rviz
+  LIBRARIES prohibition_areas_layer # prohibition_areas_tool
   CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack
-  DEPENDS
+  DEPENDS yaml-cpp
 )
 
 # 包含头文件目录
@@ -41,69 +44,63 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Qt5Core_INCLUDE_DIRS}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${YAML_CPP_INCLUDE_DIR}
 )
 
-# 构建 area_info 库
-add_library(${PROJECT_NAME}_common
-  include/${PROJECT_NAME}/area_info.h
+# 构建 Costmap 插件库
+add_library(prohibition_areas_layer
+  src/prohibition_areas_layer/prohibition_areas_layer.cpp
 )
-set_target_properties(${PROJECT_NAME}_common PROPERTIES LINKER_LANGUAGE CXX)
-
-# 构建costmap插件库
-add_library(${PROJECT_NAME}_costmap
-  src/restricted_areas_layer.cpp
-)
-add_dependencies(${PROJECT_NAME}_costmap
+add_dependencies(prohibition_areas_layer
   ${PROJECT_NAME}_gencfg
-  ${catkin_EXPORTED_TARGETS}
-  ${PROJECT_NAME}_common
 )
-target_link_libraries(${PROJECT_NAME}_costmap
+target_link_libraries(prohibition_areas_layer
   ${catkin_LIBRARIES}
   ${YAML_CPP_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${PROJECT_NAME}_common
 )
 
-# 生成Qt MOC文件
-qt5_wrap_cpp(MOC_FILES
-  include/${PROJECT_NAME}/restricted_areas_display.h
-  include/${PROJECT_NAME}/restricted_areas_tool.h
-)
-
-# 构建RViz插件库
-add_library(${PROJECT_NAME}_rviz
-  src/restricted_areas_display.cpp
-  src/restricted_areas_tool.cpp
-  ${MOC_FILES}
-)
-target_link_libraries(${PROJECT_NAME}_rviz
-  ${catkin_LIBRARIES}
-  ${Qt5Core_LIBRARIES}
-  ${Qt5Widgets_LIBRARIES}
-  ${YAML_CPP_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${PROJECT_NAME}_common
-)
+# 构建 RViz 插件库
+# add_library(prohibition_areas_tool
+#   src/prohibition_areas_tool/prohibition_areas_tool.cpp
+#   ${RESOURCES_FILES}
+# )
+# add_dependencies(prohibition_areas_tool
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#   ${catkin_EXPORTED_TARGETS}
+# )
+# target_link_libraries(prohibition_areas_tool
+#   ${catkin_LIBRARIES}
+#   ${QT_LIBRARIES}
+#   Qt5::Widgets
+#   ${YAML_CPP_LIBRARIES}
+# )
 
 # 安装目标
-install(TARGETS ${PROJECT_NAME}_costmap ${PROJECT_NAME}_rviz
+install(TARGETS
+  prohibition_areas_layer
+  # prohibition_areas_tool
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # 安装头文件
-install(DIRECTORY include
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
 )
 
-install(FILES costmap_plugins.xml rviz_plugins.xml
+# 安装插件描述文件
+install(FILES
+  costmap_plugins.xml
+  # rviz_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(DIRECTORY config launch
+# 安装配置和启动文件
+install(DIRECTORY
+  config
+  launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
