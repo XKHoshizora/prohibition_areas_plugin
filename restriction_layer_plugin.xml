@@ -1,5 +1,0 @@
-<library path="lib/libmap_restriction_plugin_layer">
-    <class type="map_restriction_plugin::RestrictionLayer" base_class_type="costmap_2d::Layer">
-        <description>A costmap layer for handling map restrictions</description>
-    </class>
-</library>

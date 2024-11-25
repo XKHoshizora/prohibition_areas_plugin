@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 背景 -->
+  <rect width="32" height="32" fill="none"/>
+  
+  <!-- 保存图标主体 -->
+  <path d="M6 4v24h20V8l-4-4H6z" fill="none" stroke="#666666" stroke-width="2"/>
+  
+  <!-- 内部细节 -->
+  <rect x="10" y="4" width="12" height="8" fill="none" stroke="#666666" stroke-width="2"/>
+  <rect x="10" y="16" width="12" height="8" fill="none" stroke="#666666" stroke-width="2"/>
+</svg>
