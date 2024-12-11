@@ -52,11 +52,6 @@ include_directories(
   ${YAML_CPP_INCLUDE_DIR}
 )
 
-target_include_directories(prohibition_areas_tool PRIVATE
-  ${Qt5Core_INCLUDE_DIRS}
-  ${Qt5Widgets_INCLUDE_DIRS}
-)
-
 # 构建 Costmap 插件库
 add_library(prohibition_areas_layer
   src/prohibition_areas_layer/prohibition_areas_layer.cpp
@@ -76,6 +71,10 @@ add_library(prohibition_areas_tool
   src/prohibition_areas_tool/prohibition_areas_display.cpp
   src/prohibition_areas_tool/prohibition_areas_saver.cpp
   ${RESOURCES_FILES}
+)
+target_include_directories(prohibition_areas_tool PRIVATE
+  ${Qt5Core_INCLUDE_DIRS}
+  ${Qt5Widgets_INCLUDE_DIRS}
 )
 add_dependencies(prohibition_areas_tool
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
