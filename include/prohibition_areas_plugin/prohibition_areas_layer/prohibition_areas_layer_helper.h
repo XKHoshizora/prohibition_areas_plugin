@@ -39,9 +39,8 @@ public:
                 return false;
             }
 
-            // 创建新的XmlRpcValue来存储转换后的格式
-            XmlRpc::XmlRpcValue converted;
-            converted.setSize(0);  // 创建一个空数组
+            // 首先收集有效的区域到一个临时向量
+            std::vector<XmlRpc::XmlRpcValue> valid_areas;
 
             // 遍历每个禁区
             for (int i = 0; i < param_yaml.size(); ++i) {
@@ -74,19 +73,26 @@ public:
                     area_points[j] = point;
                 }
 
-                // 将这个区域添加到转换后的数组中
-                converted.arrayPush(area_points);
+                // 将有效的区域添加到临时向量
+                valid_areas.push_back(area_points);
 
-                // 记录区域名称到参数服务器（可选）
+                // 记录区域名称到参数服务器
                 std::string area_name = area["name"];
                 std::string area_param = param + "/area_" + std::to_string(i) + "_name";
                 nhandle->setParam(area_param, area_name);
             }
 
+            // 创建转换后的格式
+            XmlRpc::XmlRpcValue converted;
+            converted.setSize(valid_areas.size());
+            for (size_t i = 0; i < valid_areas.size(); ++i) {
+                converted[i] = valid_areas[i];
+            }
+
             // 将转换后的格式设置到参数服务器
             nhandle->setParam(converted_param, converted);
 
-            ROS_INFO("Successfully converted prohibition areas format");
+            ROS_INFO_STREAM("Successfully converted " << valid_areas.size() << " prohibition areas");
             return true;
 
         } catch (XmlRpc::XmlRpcException& e) {
