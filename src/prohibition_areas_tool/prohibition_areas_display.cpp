@@ -115,7 +115,10 @@ void ProhibitionAreasDisplay::createGeometry() {
             // 设置线宽
             if (!fill) {
                 manual->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY - 1);
-                manual->setLineWidth(line_width);
+                // manual->setLineWidth(line_width);
+                // 使用其他方式设置线宽
+                manual->setMaterialName("BaseWhiteNoLighting");
+                // 如果需要线宽，可以考虑在材质中设置
             }
 
             scene_node_->attachObject(manual);

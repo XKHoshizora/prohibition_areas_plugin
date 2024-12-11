@@ -72,10 +72,6 @@ add_library(prohibition_areas_tool
   src/prohibition_areas_tool/prohibition_areas_saver.cpp
   ${RESOURCES_FILES}
 )
-target_include_directories(prohibition_areas_tool PRIVATE
-  ${Qt5Core_INCLUDE_DIRS}
-  ${Qt5Widgets_INCLUDE_DIRS}
-)
 add_dependencies(prohibition_areas_tool
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
@@ -86,6 +82,10 @@ target_link_libraries(prohibition_areas_tool
   Qt5::Core
   Qt5::Widgets
   ${YAML_CPP_LIBRARIES}
+)
+target_include_directories(prohibition_areas_tool PRIVATE
+  ${Qt5Core_INCLUDE_DIRS}
+  ${Qt5Widgets_INCLUDE_DIRS}
 )
 
 # 安装目标

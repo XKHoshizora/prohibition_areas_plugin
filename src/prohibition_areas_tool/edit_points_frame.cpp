@@ -5,6 +5,9 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <ros/ros.h>
 #include <sstream>
 
 namespace prohibition_areas_tool {
