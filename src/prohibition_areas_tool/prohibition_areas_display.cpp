@@ -117,7 +117,8 @@ void ProhibitionAreasDisplay::createGeometry() {
                 manual->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY - 1);
                 // manual->setLineWidth(line_width);
                 // 使用其他方式设置线宽
-                manual->setMaterialName("BaseWhiteNoLighting");
+                manual->setMaterialName(0, "BaseWhiteNoLighting",
+                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
                 // 如果需要线宽，可以考虑在材质中设置
             }
 

@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "prohibition_areas_saver.h"
+
 class QListWidget;
 class QPushButton;
 class QVBoxLayout;

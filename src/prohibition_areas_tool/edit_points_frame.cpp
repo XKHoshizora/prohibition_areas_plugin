@@ -1,5 +1,6 @@
 // edit_points_frame.cpp
 #include <prohibition_areas_plugin/prohibition_areas_tool/edit_points_frame.h>
+#include <prohibition_areas_plugin/prohibition_areas_tool/prohibition_areas_saver.h>
 
 #include <QHBoxLayout>
 #include <QListWidget>
@@ -8,6 +9,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <ros/ros.h>
+#include <algorithm>
 #include <sstream>
 
 namespace prohibition_areas_tool {
