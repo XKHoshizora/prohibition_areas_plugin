@@ -19,11 +19,13 @@ EditPointsFrame::EditPointsFrame(QWidget* parent)
       points_list_(nullptr),
       delete_button_(nullptr),
       move_up_button_(nullptr),
-      move_down_button_(nullptr) {
+      move_down_button_(nullptr),
+      save_button_(nullptr),
+      load_button_(nullptr) {
     setupUi();
 }
 
-EditPointsFrame::~EditPointsFrame() {}
+EditPointsFrame::~EditPointsFrame() = default;
 
 void EditPointsFrame::setupUi() {
     QVBoxLayout* layout = new QVBoxLayout;
@@ -85,12 +87,14 @@ void EditPointsFrame::setAreaPoints(
     current_area_id_ = area_id;
     points_ = points;
     updatePointList();
+    Q_EMIT pointsModified();
 }
 
 void EditPointsFrame::clearPoints() {
     points_.clear();
     current_area_id_.clear();
     updatePointList();
+    Q_EMIT pointsModified();
 }
 
 void EditPointsFrame::updatePointList() {
@@ -171,6 +175,7 @@ void EditPointsFrame::onSaveClicked() {
     if (ProhibitionAreasSaver::saveToFile(areas, filename.toStdString())) {
         QMessageBox::information(this, tr("Success"),
                                  tr("Prohibition areas saved successfully."));
+        Q_EMIT pointsModified();
     } else {
         QMessageBox::critical(this, tr("Error"),
                               tr("Failed to save prohibition areas."));

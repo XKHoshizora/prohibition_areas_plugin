@@ -20,7 +20,7 @@ namespace prohibition_areas_tool {
 class EditPointsFrame : public QWidget {
     Q_OBJECT
    public:
-    EditPointsFrame(QWidget* parent = nullptr);
+    explicit EditPointsFrame(QWidget* parent = nullptr);
     ~EditPointsFrame() override;
 
     void setAreaPoints(const std::string& area_id,
