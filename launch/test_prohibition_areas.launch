@@ -1,0 +1,18 @@
+<launch>
+    <!-- 加载地图和禁区 -->
+    <include file="$(find prohibition_areas_plugin)/launch/prohibition_areas_plugin.launch" />
+
+    <!-- 测试机器人(可选) -->
+    <arg name="use_test_robot" default="false"/>
+    <group if="$(arg use_test_robot)">
+        <!-- 虚拟机器人发布器 -->
+        <node pkg="fake_localization" type="fake_localization" name="fake_localization">
+            <param name="odom_frame_id" value="odom"/>
+            <param name="base_frame_id" value="base_link"/>
+        </node>
+
+        <!-- 简单的机器人运动控制器 -->
+        <node pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" name="turtlebot3_teleop_keyboard"
+              output="screen" launch-prefix="xterm -e"/>
+    </group>
+</launch>
