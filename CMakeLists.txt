@@ -19,6 +19,11 @@ find_package(yaml-cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 
+# 启用 Qt 自动生成
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
 # 生成动态配置API
 generate_dynamic_reconfigure_options(
   config/ProhibitionAreasLayer.cfg  # 代价地图插件配置
@@ -47,6 +52,11 @@ include_directories(
   ${YAML_CPP_INCLUDE_DIR}
 )
 
+target_include_directories(prohibition_areas_tool PRIVATE
+  ${Qt5Core_INCLUDE_DIRS}
+  ${Qt5Widgets_INCLUDE_DIRS}
+)
+
 # 构建 Costmap 插件库
 add_library(prohibition_areas_layer
   src/prohibition_areas_layer/prohibition_areas_layer.cpp
@@ -62,6 +72,9 @@ target_link_libraries(prohibition_areas_layer
 # 构建 RViz 插件库
 add_library(prohibition_areas_tool
   src/prohibition_areas_tool/prohibition_areas_tool.cpp
+  src/prohibition_areas_tool/edit_points_frame.cpp
+  src/prohibition_areas_tool/prohibition_areas_display.cpp
+  src/prohibition_areas_tool/prohibition_areas_saver.cpp
   ${RESOURCES_FILES}
 )
 add_dependencies(prohibition_areas_tool
@@ -71,6 +84,7 @@ add_dependencies(prohibition_areas_tool
 target_link_libraries(prohibition_areas_tool
   ${catkin_LIBRARIES}
   ${QT_LIBRARIES}
+  Qt5::Core
   Qt5::Widgets
   ${YAML_CPP_LIBRARIES}
 )
