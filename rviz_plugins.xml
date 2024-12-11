@@ -4,6 +4,6 @@
          base_class_type="rviz::Tool">
     <description>用于显示和绘制禁区的RViz工具插件</description>
     <!-- 添加工具栏图标 -->
-    <icon type="file">icons/classes/restricted_area.svg</icon>
+    <icon type="file">icons/restricted_area.svg</icon>
   </class>
 </library>

@@ -60,20 +60,20 @@ target_link_libraries(prohibition_areas_layer
 )
 
 # 构建 RViz 插件库
-# add_library(prohibition_areas_tool
-#   src/prohibition_areas_tool/prohibition_areas_tool.cpp
-#   ${RESOURCES_FILES}
-# )
-# add_dependencies(prohibition_areas_tool
-#   ${${PROJECT_NAME}_EXPORTED_TARGETS}
-#   ${catkin_EXPORTED_TARGETS}
-# )
-# target_link_libraries(prohibition_areas_tool
-#   ${catkin_LIBRARIES}
-#   ${QT_LIBRARIES}
-#   Qt5::Widgets
-#   ${YAML_CPP_LIBRARIES}
-# )
+add_library(prohibition_areas_tool
+  src/prohibition_areas_tool/prohibition_areas_tool.cpp
+  ${RESOURCES_FILES}
+)
+add_dependencies(prohibition_areas_tool
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(prohibition_areas_tool
+  ${catkin_LIBRARIES}
+  ${QT_LIBRARIES}
+  Qt5::Widgets
+  ${YAML_CPP_LIBRARIES}
+)
 
 # 安装目标
 install(TARGETS
@@ -88,12 +88,13 @@ install(TARGETS
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
+  PATTERN "*.svn" EXCLUDE
 )
 
 # 安装插件描述文件
 install(FILES
   costmap_plugins.xml
-  # rviz_plugins.xml
+  rviz_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -102,6 +103,7 @@ install(DIRECTORY
   config
   launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  PATTERN "*.svn" EXCLUDE
 )
 
 # 安装图标文件

@@ -2,19 +2,19 @@
 <RCC version="1.0">
   <qresource prefix="/prohibition_areas_plugin">
     <!-- 类图标 -->
-    <file>../icons/classes/restricted_area.svg</file>
+    <file>../icons/restricted_area.svg</file>
 
     <!-- 工具栏图标 -->
-    <file>../icons/toolbar/new_area.svg</file>
-    <file>../icons/toolbar/edit_area.svg</file>
-    <file>../icons/toolbar/delete_area.svg</file>
-    <file>../icons/toolbar/undo.svg</file>
-    <file>../icons/toolbar/redo.svg</file>
-    <file>../icons/toolbar/save.svg</file>
-    <file>../icons/toolbar/load.svg</file>
-    <file>../icons/toolbar/duplicate.svg</file>
-    <file>../icons/toolbar/merge.svg</file>
-    <file>../icons/toolbar/snap_grid.svg</file>
-    <file>../icons/toolbar/settings.svg</file>
+    <file>../icons/new_area.svg</file>
+    <file>../icons/edit_area.svg</file>
+    <file>../icons/delete_area.svg</file>
+    <file>../icons/undo.svg</file>
+    <file>../icons/redo.svg</file>
+    <file>../icons/save.svg</file>
+    <file>../icons/load.svg</file>
+    <file>../icons/duplicate.svg</file>
+    <file>../icons/merge.svg</file>
+    <file>../icons/snap_grid.svg</file>
+    <file>../icons/settings.svg</file>
   </qresource>
 </RCC>
