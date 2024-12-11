@@ -11,6 +11,9 @@
 #include <string>
 #include <vector>
 
+#include "edit_points_frame.h"
+#include "prohibition_areas_saver.h"
+
 namespace Ogre {
 class SceneNode;
 class ManualObject;

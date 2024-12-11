@@ -17,7 +17,7 @@
 
 namespace prohibition_areas_tool {
 
-EditPointsFrame::EditPointsFrame(QWidget* parent)
+EditPointsFrame::EditPointsFrame(const std::string& save_path, QWidget* parent)
     : QWidget(parent),
       tree_widget_(nullptr),
       delete_button_(nullptr),

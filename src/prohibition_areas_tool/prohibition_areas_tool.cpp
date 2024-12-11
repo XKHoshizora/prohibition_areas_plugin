@@ -16,6 +16,7 @@
 #include <QMessageBox>
 #include <QDateTime>
 #include <QInputDialog>
+#include <sys/stat.h>
 
 namespace prohibition_areas_tool {
 
@@ -272,8 +273,11 @@ void ProhibitionAreasTool::updatePreview() {
 bool ProhibitionAreasTool::saveAreas(const std::vector<ProhibitionArea>& new_areas) {
     std::vector<ProhibitionArea> areas;
 
+    struct stat buffer;
+    bool file_exists = (stat(save_path_.c_str(), &buffer) == 0);
+
     // 如果是追加模式，先读取现有的禁区
-    if (append_mode_ && boost::filesystem::exists(save_path_)) {
+    if (append_mode_ && file_exists) {
         if (!ProhibitionAreasSaver::loadFromFile(areas, save_path_)) {
             ROS_WARN("Failed to load existing areas, starting fresh");
         }
