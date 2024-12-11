@@ -50,7 +50,7 @@ class EditPointsFrame : public QWidget {
     void onLoadClicked();
 
    private:
-    void updatePointList();
+    void updateTree();
     void setupUi();
     QString formatPoint(const geometry_msgs::Point& point);
     QTreeWidgetItem* findAreaItem(const std::string& area_id);

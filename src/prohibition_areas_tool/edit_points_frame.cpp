@@ -270,71 +270,86 @@ void EditPointsFrame::onMoveDownClicked() {
 }
 
 void EditPointsFrame::onSaveClicked() {
-    QString filename =
-        QFileDialog::getSaveFileName(this, tr("Save Prohibition Areas"), "",
-                                     tr("YAML files (*.yaml);;All Files (*)"));
-
-    if (filename.isEmpty()) return;
-
-    std::vector<ProhibitionArea> areas;
-    ProhibitionArea area;
-    area.name = current_area_id_;
-    area.frame_id = "map";  // 使用固定的frame_id
-    area.points = points_;
-    areas.push_back(area);
-
-    if (ProhibitionAreasSaver::saveToFile(areas, filename.toStdString())) {
-        QMessageBox::information(this, tr("Success"),
-                                 tr("Prohibition areas saved successfully."));
-        Q_EMIT pointsModified();
-    } else {
-        QMessageBox::critical(this, tr("Error"),
-                              tr("Failed to save prohibition areas."));
+    if (current_area_id_.empty()) {
+        QMessageBox::warning(this, tr("Warning"),
+            tr("No area selected."));
+        return;
     }
-}
 
-void EditPointsFrame::onLoadClicked() {
-    QString filename = QFileDialog::getOpenFileName(this,
-        tr("Load Prohibition Areas"), "",
+    auto it = areas_.find(current_area_id_);
+    if (it == areas_.end() || it->second.points.size() < 3) {
+        QMessageBox::warning(this, tr("Warning"),
+            tr("Selected area must have at least 3 points."));
+        return;
+    }
+
+    QString filename = QFileDialog::getSaveFileName(
+        this, tr("Save Prohibition Areas"), "",
         tr("YAML files (*.yaml);;All Files (*)"));
 
     if (filename.isEmpty()) return;
 
-    std::vector<ProhibitionArea> areas;
-    if (ProhibitionAreasSaver::loadFromFile(areas, filename.toStdString())) {
-        if (areas.empty()) {
+    ProhibitionArea area;
+    area.name = current_area_id_;
+    area.frame_id = "map";
+    area.points = it->second.points;  // 使用选中区域的点
+
+    std::vector<ProhibitionArea> areas{area};
+
+    if (ProhibitionAreasSaver::saveToFile(areas, filename.toStdString())) {
+        QMessageBox::information(this, tr("Success"),
+                                tr("Prohibition areas saved successfully."));
+        Q_EMIT pointsModified();
+    } else {
+        QMessageBox::critical(this, tr("Error"),
+                            tr("Failed to save prohibition areas."));
+    }
+}
+
+void EditPointsFrame::onLoadClicked() {
+    QString filename = QFileDialog::getOpenFileName(
+        this, tr("Load Prohibition Areas"), "",
+        tr("YAML files (*.yaml);;All Files (*)"));
+
+    if (filename.isEmpty()) return;
+
+    std::vector<ProhibitionArea> loaded_areas;
+    if (ProhibitionAreasSaver::loadFromFile(loaded_areas, filename.toStdString())) {
+        if (loaded_areas.empty()) {
             QMessageBox::warning(this, tr("Warning"),
-                tr("No valid areas found in file."));
+                               tr("No valid areas found in file."));
             return;
         }
 
         // 验证frame_id
-        std::string expected_frame = "map"; // 或从配置获取
-        for (const auto& area : areas) {
+        std::string expected_frame = "map";
+        for (const auto& area : loaded_areas) {
             if (area.frame_id != expected_frame) {
-                QMessageBox::warning(this, tr("Warning"),
+                QMessageBox::warning(
+                    this, tr("Warning"),
                     tr("Frame ID mismatch: expected '%1', got '%2' for area '%3'")
-                    .arg(QString::fromStdString(expected_frame))
-                    .arg(QString::fromStdString(area.frame_id))
-                    .arg(QString::fromStdString(area.name)));
+                        .arg(QString::fromStdString(expected_frame))
+                        .arg(QString::fromStdString(area.frame_id))
+                        .arg(QString::fromStdString(area.name)));
                 continue;
             }
 
             if (area.points.size() < 3) {
                 ROS_WARN_STREAM("Skipping area '" << area.name
-                    << "': insufficient points");
+                                                 << "': insufficient points");
                 continue;
             }
 
-            // 更新当前区域
+            // 更新区域数据
             current_area_id_ = area.name;
-            points_ = area.points;
-            updatePointList();
-            Q_EMIT pointsModified();
+            areas_[current_area_id_].name = area.name;
+            areas_[current_area_id_].points = area.points;
         }
+        updateTree();
+        Q_EMIT pointsModified();
     } else {
         QMessageBox::critical(this, tr("Error"),
-            tr("Failed to load prohibition areas."));
+                            tr("Failed to load prohibition areas."));
     }
 }
 
