@@ -51,7 +51,17 @@ void ProhibitionAreasTool::onInitialize() {
     // 创建预览显示
     preview_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
     preview_object_ = scene_manager_->createManualObject();
+    preview_object_->setDynamic(true);
     preview_node_->attachObject(preview_object_);
+
+    // 设置点的大小
+    preview_object_->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
+    Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
+        "ProhibitionAreaMaterial", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    material->setPointSize(10);  // 设置点的大小
+    material->setAmbient(1.0, 1.0, 1.0);
+    material->setDiffuse(1.0, 1.0, 1.0, 1.0);
+    preview_object_->setMaterialName(0, "ProhibitionAreaMaterial");
 
     // 设置工具光标
     setCursor(QCursor(Qt::CrossCursor));
@@ -63,6 +73,8 @@ void ProhibitionAreasTool::activate() {
     }
     drawing_ = true;
     current_points_.clear();
+    updatePreview();
+    preview_node_->setVisible(true);
 }
 
 void ProhibitionAreasTool::deactivate() {
@@ -94,17 +106,75 @@ int ProhibitionAreasTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
     if (!drawing_) return Render;
 
     geometry_msgs::Point point;
-    if (!getWorldPoint(event, point)) return Render;
+    bool valid_point = getWorldPoint(event, point);
 
-    if (event.leftDown()) {
+    // 左键点击添加点
+    if (valid_point && event.leftDown()) {
         addPoint(point);
-    } else if (event.rightDown()) {
-        saveCurrentArea();
-        current_points_.clear();
-        Q_EMIT areaUpdated();
+        updatePreview();  // 立即更新显示
+        return Render;
     }
 
-    updatePreview();
+    // 右键点击完成绘制
+    if (event.rightDown()) {
+        if (current_points_.size() >= 3) {
+            saveCurrentArea();
+            current_points_.clear();
+            updatePreview();
+            Q_EMIT areaUpdated();
+        } else {
+            QMessageBox::warning(nullptr, "Warning",
+                "At least 3 points are required to create an area.");
+        }
+        return Render;
+    }
+
+    // if (!getWorldPoint(event, point)) return Render;
+
+    // if (event.leftDown()) {
+    //     addPoint(point);
+    // } else if (event.rightDown()) {
+    //     saveCurrentArea();
+    //     current_points_.clear();
+    //     Q_EMIT areaUpdated();
+    // }
+
+    // updatePreview();
+
+    // 鼠标移动时预览下一个点
+    if (valid_point && !current_points_.empty()) {
+        preview_object_->clear();
+
+        // 绘制已有的线段
+        preview_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+        preview_object_->colour(0.0f, 1.0f, 0.0f, 1.0f);
+
+        for (const auto& p : current_points_) {
+            preview_object_->position(p.x, p.y, 0.0f);
+        }
+
+        // 添加预览线段到鼠标位置
+        preview_object_->position(point.x, point.y, 0.0f);
+
+        if (current_points_.size() >= 2) {
+            // 添加到起始点的虚线
+            preview_object_->colour(0.0f, 1.0f, 0.0f, 0.5f);
+            preview_object_->position(current_points_[0].x, current_points_[0].y, 0.0f);
+        }
+
+        preview_object_->end();
+
+        // 绘制点
+        preview_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST);
+        preview_object_->colour(1.0f, 0.0f, 0.0f, 1.0f);
+
+        for (const auto& p : current_points_) {
+            preview_object_->position(p.x, p.y, 0.0f);
+        }
+
+        preview_object_->end();
+    }
+
     return Render;
 }
 
@@ -128,16 +198,41 @@ bool ProhibitionAreasTool::getWorldPoint(rviz::ViewportMouseEvent& event,
 }
 
 void ProhibitionAreasTool::updatePreview() {
+    // 清除之前的显示
     preview_object_->clear();
 
-    if (current_points_.empty()) return;
+    if (current_points_.empty()) {
+        preview_node_->setVisible(false);
+        return;
+    }
 
-    preview_object_->begin("BaseWhiteNoLighting",
-                           Ogre::RenderOperation::OT_LINE_STRIP);
+    preview_node_->setVisible(true);
 
+    // 开始绘制点和线
+    preview_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+
+    // 设置线的颜色（绿色）
+    preview_object_->colour(0.0f, 1.0f, 0.0f, 1.0f);
+
+    // 添加所有已有的点
     for (const auto& point : current_points_) {
         preview_object_->position(point.x, point.y, 0.0f);
-        preview_object_->colour(0.0f, 1.0f, 0.0f, 1.0f);
+    }
+
+    // 如果有至少3个点，自动闭合多边形
+    if (current_points_.size() >= 3) {
+        preview_object_->position(current_points_[0].x, current_points_[0].y, 0.0f);
+    }
+
+    preview_object_->end();
+
+    // 绘制点标记
+    preview_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST);
+    preview_object_->colour(1.0f, 0.0f, 0.0f, 1.0f); // 红色点
+
+    for (const auto& point : current_points_) {
+        // 绘制每个点
+        preview_object_->position(point.x, point.y, 0.0f);
     }
 
     preview_object_->end();
