@@ -28,7 +28,7 @@ class EditPointsFrame : public QWidget {
     Q_OBJECT
 
    public:
-    explicit EditPointsFrame(QWidget* parent = nullptr);
+    explicit EditPointsFrame(const std::string& save_path, QWidget* parent = nullptr);
     ~EditPointsFrame() override;
 
     void setAreaPoints(const std::string& area_id,
@@ -66,6 +66,7 @@ class EditPointsFrame : public QWidget {
 
     std::map<std::string, AreaData> areas_;  // 存储所有禁区数据
     std::string current_area_id_;            // 当前选中的禁区ID
+    std::string save_path_;  // 保存路径
 };
 
 }  // end namespace prohibition_areas_tool

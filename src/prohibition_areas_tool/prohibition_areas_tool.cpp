@@ -44,8 +44,19 @@ ProhibitionAreasTool::~ProhibitionAreasTool() {
 }
 
 void ProhibitionAreasTool::onInitialize() {
+    // 获取私有节点句柄
+    ros::NodeHandle private_nh("~");
+
+    // 读取保存路径，如果没有配置则使用默认路径
+    std::string pkg_path = ros::package::getPath("prohibition_areas_plugin");
+    save_path_ = pkg_path + "/prohibition_areas/prohibition_areas.yaml";
+    private_nh.param<std::string>("prohibition_areas_path", save_path_, save_path_);
+
+    // 读取是否为追加模式，默认为true
+    private_nh.param<bool>("append_mode", append_mode_, true);
+
     // 创建编辑面板
-    edit_frame_ = new EditPointsFrame();
+    edit_frame_ = new EditPointsFrame(save_path_);  // 传递保存路径给编辑面板
     connect(edit_frame_, &EditPointsFrame::pointsModified, this,
             &ProhibitionAreasTool::areaUpdated);
 
@@ -70,8 +81,10 @@ void ProhibitionAreasTool::activate() {
     if (edit_frame_) {
         edit_frame_->show();
     }
-    drawing_ = true;
+    // 清除当前点和区域ID，准备创建新的禁区
+    current_area_id_.clear();
     current_points_.clear();
+    drawing_ = true;
     updatePreview();
     preview_node_->setVisible(true);
 }
@@ -117,10 +130,28 @@ int ProhibitionAreasTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
     // 右键点击完成绘制
     if (event.rightDown()) {
         if (current_points_.size() >= 3) {
-            saveCurrentArea();
-            current_points_.clear();
-            updatePreview();
-            Q_EMIT areaUpdated();
+            // 获取新区域名称
+            bool ok;
+            QString area_name = QInputDialog::getText(nullptr,
+                "Save Area",
+                "Enter area name:",
+                QLineEdit::Normal,
+                QString::fromStdString(current_area_id_),
+                &ok);
+
+            if (ok && !area_name.isEmpty()) {
+                // 保存当前区域
+                std::string new_area_id = area_name.toStdString();
+                if (edit_frame_) {
+                    edit_frame_->setAreaPoints(new_area_id, current_points_);
+                }
+
+                // 清除当前点，准备下一个区域
+                current_area_id_.clear();
+                current_points_.clear();
+                updatePreview();
+                Q_EMIT areaUpdated();
+            }
         } else {
             QMessageBox::warning(nullptr, "Warning",
                 "At least 3 points are required to create an area.");
@@ -238,63 +269,81 @@ void ProhibitionAreasTool::updatePreview() {
     preview_object_->end();
 }
 
+bool ProhibitionAreasTool::saveAreas(const std::vector<ProhibitionArea>& new_areas) {
+    std::vector<ProhibitionArea> areas;
+
+    // 如果是追加模式，先读取现有的禁区
+    if (append_mode_ && boost::filesystem::exists(save_path_)) {
+        if (!ProhibitionAreasSaver::loadFromFile(areas, save_path_)) {
+            ROS_WARN("Failed to load existing areas, starting fresh");
+        }
+    }
+
+    // 更新或添加新区域
+    for (const auto& new_area : new_areas) {
+        bool area_updated = false;
+        for (auto& area : areas) {
+            if (area.name == new_area.name) {
+                area = new_area;
+                area_updated = true;
+                break;
+            }
+        }
+        if (!area_updated) {
+            areas.push_back(new_area);
+        }
+    }
+
+    // 保存所有区域
+    bool success = ProhibitionAreasSaver::saveToFile(areas, save_path_);
+    if (success) {
+        ROS_INFO_STREAM("Successfully saved prohibition areas to: " << save_path_);
+    } else {
+        ROS_ERROR_STREAM("Failed to save prohibition areas to: " << save_path_);
+    }
+    return success;
+}
+
 void ProhibitionAreasTool::saveCurrentArea() {
     if (current_points_.size() < 3) {
         ROS_ERROR("Cannot save area: at least 3 points required");
         QMessageBox::warning(nullptr, "Error",
             "Cannot save area: at least 3 points required");
-        return;
+        return false;
     }
 
-    // 创建输入对话框让用户输入区域名称
+    // 获取区域名称
     bool ok;
     QString area_name = QInputDialog::getText(nullptr,
         "Save Area",
         "Enter area name:",
         QLineEdit::Normal,
-        QString::fromStdString(current_area_id_),  // 默认显示当前ID（如果有的话）
+        QString::fromStdString(current_area_id_),
         &ok);
 
     if (!ok || area_name.isEmpty()) {
         QMessageBox::warning(nullptr, "Warning", "Area name is required.");
-        return;
+        return false;
     }
 
-    // if (current_area_id_.empty()) {
-    //     // 生成唯一的区域ID
-    //     current_area_id_ = "area_" +
-    //         QString::number(QDateTime::currentMSecsSinceEpoch()).toStdString();
-    //     ROS_INFO_STREAM("Generated new area ID: " << current_area_id_);
-    // }
-
-    // 更新当前区域ID
-    current_area_id_ = area_name.toStdString();
-
-    // 如果编辑面板存在，更新显示
-    if (edit_frame_) {
-        edit_frame_->setAreaPoints(current_area_id_, current_points_);
-        // 立即触发显示更新
-        Q_EMIT areaUpdated();
-    }
-
-    // 自动保存到文件
+    // 创建新区域
     ProhibitionArea area;
-    area.name = current_area_id_;
+    area.name = area_name.toStdString();
     area.frame_id = frame_property_->getStdString();
     area.points = current_points_;
 
+    // 保存区域
     std::vector<ProhibitionArea> areas{area};
-    std::string pkg_path = ros::package::getPath("prohibition_areas_plugin");
-    std::string file_path = pkg_path + "/prohibition_areas/prohibition_areas.yaml";
-
-    if (ProhibitionAreasSaver::saveToFile(areas, file_path)) {
-        ROS_INFO_STREAM("Area '" << current_area_id_ << "' saved successfully");
-        QMessageBox::information(nullptr, "Success",
-            QString("Area '%1' saved successfully.").arg(QString::fromStdString(current_area_id_)));
-    } else {
-        ROS_ERROR("Failed to save area");
-        QMessageBox::critical(nullptr, "Error", "Failed to save area to file.");
+    if (!saveAreas(areas)) {
+        return false;
     }
+
+    // 更新编辑面板
+    if (edit_frame_) {
+        edit_frame_->setAreaPoints(area.name, current_points_);
+    }
+
+    return true;
 }
 
 void ProhibitionAreasTool::addPoint(const geometry_msgs::Point& point) {

@@ -24,13 +24,18 @@ EditPointsFrame::EditPointsFrame(QWidget* parent)
       move_up_button_(nullptr),
       move_down_button_(nullptr),
       save_button_(nullptr),
-      load_button_(nullptr) {
+      load_button_(nullptr),
+      save_path_(save_path) {
     setupUi();
 }
 
 EditPointsFrame::~EditPointsFrame() = default;
 
 void EditPointsFrame::setupUi() {
+    // 设置窗口属性，保持在最前面
+    setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
+    setWindowTitle("Prohibition Areas Editor");
+
     QVBoxLayout* layout = new QVBoxLayout;
 
     // 创建树形控件
@@ -99,12 +104,19 @@ QString EditPointsFrame::formatPoint(const geometry_msgs::Point& point) {
 
 void EditPointsFrame::setAreaPoints(const std::string& area_id,
                                   const std::vector<geometry_msgs::Point>& points) {
+    // 如果是新区域或更新已有区域
     AreaData& area = areas_[area_id];
     area.name = area_id;
     area.points = points;
     current_area_id_ = area_id;
     updateTree();
     Q_EMIT pointsModified();
+
+    // 展开新添加的区域节点
+    if (QTreeWidgetItem* item = findAreaItem(area_id)) {
+        item->setExpanded(true);
+        tree_widget_->setCurrentItem(item);
+    }
 }
 
 void EditPointsFrame::clearPoints() {
@@ -270,39 +282,37 @@ void EditPointsFrame::onMoveDownClicked() {
 }
 
 void EditPointsFrame::onSaveClicked() {
-    if (current_area_id_.empty()) {
+    if (areas_.empty()) {
         QMessageBox::warning(this, tr("Warning"),
-            tr("No area selected."));
+            tr("No areas to save."));
         return;
     }
 
-    auto it = areas_.find(current_area_id_);
-    if (it == areas_.end() || it->second.points.size() < 3) {
+    std::vector<ProhibitionArea> areas_to_save;
+    for (const auto& pair : areas_) {
+        const AreaData& area_data = pair.second;
+        if (area_data.points.size() < 3) continue;
+
+        ProhibitionArea area;
+        area.name = area_data.name;
+        area.frame_id = "map";
+        area.points = area_data.points;
+        areas_to_save.push_back(area);
+    }
+
+    if (areas_to_save.empty()) {
         QMessageBox::warning(this, tr("Warning"),
-            tr("Selected area must have at least 3 points."));
+            tr("No valid areas to save."));
         return;
     }
 
-    QString filename = QFileDialog::getSaveFileName(
-        this, tr("Save Prohibition Areas"), "",
-        tr("YAML files (*.yaml);;All Files (*)"));
-
-    if (filename.isEmpty()) return;
-
-    ProhibitionArea area;
-    area.name = current_area_id_;
-    area.frame_id = "map";
-    area.points = it->second.points;  // 使用选中区域的点
-
-    std::vector<ProhibitionArea> areas{area};
-
-    if (ProhibitionAreasSaver::saveToFile(areas, filename.toStdString())) {
+    if (ProhibitionAreasSaver::saveToFile(areas_to_save, save_path_)) {
         QMessageBox::information(this, tr("Success"),
-                                tr("Prohibition areas saved successfully."));
+            tr("Prohibition areas saved successfully."));
         Q_EMIT pointsModified();
     } else {
         QMessageBox::critical(this, tr("Error"),
-                            tr("Failed to save prohibition areas."));
+            tr("Failed to save prohibition areas."));
     }
 }
 

@@ -49,6 +49,8 @@ class ProhibitionAreasTool : public rviz::Tool {
     void saveCurrentArea();
     // 添加点到当前区域
     void addPoint(const geometry_msgs::Point& point);
+    // 保存区域
+    bool saveAreas(const std::vector<ProhibitionArea>& areas);
 
    private:
     // 当前编辑的区域ID
@@ -65,6 +67,10 @@ class ProhibitionAreasTool : public rviz::Tool {
     bool drawing_;
     // 框架ID属性
     rviz::StringProperty* frame_property_;
+    // 保存路径
+    std::string save_path_;
+    // 保存模式
+    bool append_mode_;
 };
 
 }  // end namespace prohibition_areas_tool
