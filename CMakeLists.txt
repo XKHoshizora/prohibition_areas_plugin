@@ -25,15 +25,14 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+# Qt资源文件编译
+set(RESOURCES_FILES
+  resources/prohibition_areas_plugin.qrc
+)
+
 # 生成动态配置API
 generate_dynamic_reconfigure_options(
   config/ProhibitionAreasLayer.cfg  # 代价地图插件配置
-)
-
-# Qt资源文件编译
-set(CMAKE_AUTORCC ON)
-set(RESOURCES_FILES
-  resources/prohibition_areas_plugin.qrc
 )
 
 # 设置catkin构建信息
@@ -41,7 +40,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES prohibition_areas_layer prohibition_areas_tool
   CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack xmlrpcpp
-  DEPENDS yaml-cpp
+  DEPENDS yaml-cpp Qt5Core Qt5Widgets
 )
 
 # 包含头文件目录
@@ -79,15 +78,17 @@ add_dependencies(prohibition_areas_tool
 )
 target_link_libraries(prohibition_areas_tool
   ${catkin_LIBRARIES}
-  ${QT_LIBRARIES}
+  ${YAML_CPP_LIBRARIES}
   Qt5::Core
   Qt5::Widgets
-  ${YAML_CPP_LIBRARIES}
 )
-target_include_directories(prohibition_areas_tool PRIVATE
-  ${Qt5Core_INCLUDE_DIRS}
-  ${Qt5Widgets_INCLUDE_DIRS}
-)
+
+# 添加编译选项
+if(NOT WIN32)
+  set_target_properties(prohibition_areas_tool PROPERTIES
+    COMPILE_FLAGS "-fPIC"
+  )
+endif()
 
 # 安装目标
 install(TARGETS
