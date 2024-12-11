@@ -97,9 +97,8 @@ QString EditPointsFrame::formatPoint(const geometry_msgs::Point& point) {
     return QString::fromStdString(ss.str());
 }
 
-void EditPointsFrame::setAreaPoints(
-    const std::string& area_id,
-    const std::vector<geometry_msgs::Point>& points) {
+void EditPointsFrame::setAreaPoints(const std::string& area_id,
+                                  const std::vector<geometry_msgs::Point>& points) {
     AreaData& area = areas_[area_id];
     area.name = area_id;
     area.points = points;
