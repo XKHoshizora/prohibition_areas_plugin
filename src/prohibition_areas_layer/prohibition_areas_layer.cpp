@@ -38,6 +38,7 @@
  *********************************************************************/
 
 #include <prohibition_areas_plugin/prohibition_areas_layer/prohibition_areas_layer.h>
+#include <prohibition_areas_plugin/prohibition_areas_layer/prohibition_areas_layer_helper.h>
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(prohibition_areas_layer::ProhibitionAreasLayer, costmap_2d::Layer)
