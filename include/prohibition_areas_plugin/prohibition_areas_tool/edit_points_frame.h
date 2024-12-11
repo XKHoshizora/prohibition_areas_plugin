@@ -7,18 +7,26 @@
 #include <QWidget>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "prohibition_areas_saver.h"
 
-class QListWidget;
+class QTreeWidget;
+class QTreeWidgetItem;
 class QPushButton;
 class QVBoxLayout;
 class QHBoxLayout;
 
 namespace prohibition_areas_tool {
 
+struct AreaData {
+    std::string name;
+    std::vector<geometry_msgs::Point> points;
+};
+
 class EditPointsFrame : public QWidget {
     Q_OBJECT
+
    public:
     explicit EditPointsFrame(QWidget* parent = nullptr);
     ~EditPointsFrame() override;
@@ -31,9 +39,10 @@ class EditPointsFrame : public QWidget {
     void pointSelected(int index);
     void pointDeleted(int index);
     void pointsModified();
+    void areaSelected(const std::string& area_id);
 
    private Q_SLOTS:
-    void onPointSelected(int index);
+    void onItemSelected(QTreeWidgetItem* item, int column);
     void onDeleteClicked();
     void onMoveUpClicked();
     void onMoveDownClicked();
@@ -43,16 +52,20 @@ class EditPointsFrame : public QWidget {
    private:
     void updatePointList();
     void setupUi();
+    QString formatPoint(const geometry_msgs::Point& point);
+    QTreeWidgetItem* findAreaItem(const std::string& area_id);
+    bool isPointItem(QTreeWidgetItem* item);
+    int getPointIndex(QTreeWidgetItem* item);
 
-    QListWidget* points_list_;
+    QTreeWidget* tree_widget_;
     QPushButton* delete_button_;
     QPushButton* move_up_button_;
     QPushButton* move_down_button_;
     QPushButton* save_button_;
     QPushButton* load_button_;
 
-    std::string current_area_id_;
-    std::vector<geometry_msgs::Point> points_;
+    std::map<std::string, AreaData> areas_;  // 存储所有禁区数据
+    std::string current_area_id_;            // 当前选中的禁区ID
 };
 
 }  // end namespace prohibition_areas_tool

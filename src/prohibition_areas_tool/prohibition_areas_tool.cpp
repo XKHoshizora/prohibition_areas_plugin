@@ -15,6 +15,7 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QInputDialog>
 
 namespace prohibition_areas_tool {
 
@@ -245,18 +246,36 @@ void ProhibitionAreasTool::saveCurrentArea() {
         return;
     }
 
-    if (current_area_id_.empty()) {
-        // 生成唯一的区域ID
-        current_area_id_ = "area_" +
-            QString::number(QDateTime::currentMSecsSinceEpoch()).toStdString();
-        ROS_INFO_STREAM("Generated new area ID: " << current_area_id_);
+    // 创建输入对话框让用户输入区域名称
+    bool ok;
+    QString area_name = QInputDialog::getText(nullptr,
+        "Save Area",
+        "Enter area name:",
+        QLineEdit::Normal,
+        QString::fromStdString(current_area_id_),  // 默认显示当前ID（如果有的话）
+        &ok);
+
+    if (!ok || area_name.isEmpty()) {
+        QMessageBox::warning(nullptr, "Warning", "Area name is required.");
+        return;
     }
 
-    // 更新编辑面板
-    edit_frame_->setAreaPoints(current_area_id_, current_points_);
+    // if (current_area_id_.empty()) {
+    //     // 生成唯一的区域ID
+    //     current_area_id_ = "area_" +
+    //         QString::number(QDateTime::currentMSecsSinceEpoch()).toStdString();
+    //     ROS_INFO_STREAM("Generated new area ID: " << current_area_id_);
+    // }
 
-    // 立即触发显示更新
-    Q_EMIT areaUpdated();
+    // 更新当前区域ID
+    current_area_id_ = area_name.toStdString();
+
+    // 如果编辑面板存在，更新显示
+    if (edit_frame_) {
+        edit_frame_->setAreaPoints(current_area_id_, current_points_);
+        // 立即触发显示更新
+        Q_EMIT areaUpdated();
+    }
 
     // 自动保存到文件
     ProhibitionArea area;
@@ -269,10 +288,12 @@ void ProhibitionAreasTool::saveCurrentArea() {
     std::string file_path = pkg_path + "/prohibition_areas/prohibition_areas.yaml";
 
     if (ProhibitionAreasSaver::saveToFile(areas, file_path)) {
-        ROS_INFO("Area saved successfully");
+        ROS_INFO_STREAM("Area '" << current_area_id_ << "' saved successfully");
+        QMessageBox::information(nullptr, "Success",
+            QString("Area '%1' saved successfully.").arg(QString::fromStdString(current_area_id_)));
     } else {
         ROS_ERROR("Failed to save area");
-        QMessageBox::critical(nullptr, tr("Error"), tr("Failed to save area to file"));
+        QMessageBox::critical(nullptr, "Error", "Failed to save area to file.");
     }
 }
 

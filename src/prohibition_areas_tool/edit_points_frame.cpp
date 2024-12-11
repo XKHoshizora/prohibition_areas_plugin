@@ -2,21 +2,24 @@
 #include <prohibition_areas_plugin/prohibition_areas_tool/edit_points_frame.h>
 #include <prohibition_areas_plugin/prohibition_areas_tool/prohibition_areas_saver.h>
 
+#include <QTreeWidget>
+#include <QHeaderView>
 #include <QHBoxLayout>
-#include <QListWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <ros/ros.h>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 namespace prohibition_areas_tool {
 
 EditPointsFrame::EditPointsFrame(QWidget* parent)
     : QWidget(parent),
-      points_list_(nullptr),
+      tree_widget_(nullptr),
       delete_button_(nullptr),
       move_up_button_(nullptr),
       move_down_button_(nullptr),
@@ -30,38 +33,44 @@ EditPointsFrame::~EditPointsFrame() = default;
 void EditPointsFrame::setupUi() {
     QVBoxLayout* layout = new QVBoxLayout;
 
-    // 点列表
-    points_list_ = new QListWidget;
-    layout->addWidget(points_list_);
+    // 创建树形控件
+    tree_widget_ = new QTreeWidget;
+    tree_widget_->setHeaderLabels({"Prohibition Areas"});
+    tree_widget_->setExpandsOnDoubleClick(true);
+    tree_widget_->setSelectionMode(QAbstractItemView::SingleSelection);
+    tree_widget_->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    layout->addWidget(tree_widget_);
 
     // 按钮布局
     QHBoxLayout* button_layout = new QHBoxLayout;
-
     delete_button_ = new QPushButton("Delete");
     move_up_button_ = new QPushButton("Move Up");
     move_down_button_ = new QPushButton("Move Down");
-
-    // 添加文件操作按钮
-    QHBoxLayout* file_layout = new QHBoxLayout;
-    save_button_ = new QPushButton("Save Areas");
-    load_button_ = new QPushButton("Load Areas");
 
     button_layout->addWidget(delete_button_);
     button_layout->addWidget(move_up_button_);
     button_layout->addWidget(move_down_button_);
 
-    layout->addLayout(button_layout);
+    // 文件操作按钮
+    QHBoxLayout* file_layout = new QHBoxLayout;
+    save_button_ = new QPushButton("Save Areas");
+    load_button_ = new QPushButton("Load Areas");
 
     file_layout->addWidget(save_button_);
     file_layout->addWidget(load_button_);
 
+    layout->addLayout(button_layout);
     layout->addLayout(file_layout);
 
     setLayout(layout);
 
     // 连接信号和槽
-    connect(points_list_, &QListWidget::currentRowChanged, this,
-            &EditPointsFrame::onPointSelected);
+    connect(tree_widget_, &QTreeWidget::itemSelectionChanged, [this]() {
+        QTreeWidgetItem* item = tree_widget_->currentItem();
+        if (item) {
+            onItemSelected(item, 0);
+        }
+    });
     connect(delete_button_, &QPushButton::clicked, this,
             &EditPointsFrame::onDeleteClicked);
     connect(move_up_button_, &QPushButton::clicked, this,
@@ -78,83 +87,186 @@ void EditPointsFrame::setupUi() {
     move_up_button_->setEnabled(false);
     move_down_button_->setEnabled(false);
 
-    setMinimumWidth(200);
+    setMinimumWidth(300);
+}
+
+QString EditPointsFrame::formatPoint(const geometry_msgs::Point& point) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(3);
+    ss << "(" << point.x << ", " << point.y << ")";
+    return QString::fromStdString(ss.str());
 }
 
 void EditPointsFrame::setAreaPoints(
     const std::string& area_id,
     const std::vector<geometry_msgs::Point>& points) {
+    AreaData& area = areas_[area_id];
+    area.name = area_id;
+    area.points = points;
     current_area_id_ = area_id;
-    points_ = points;
-    updatePointList();
+    updateTree();
     Q_EMIT pointsModified();
 }
 
 void EditPointsFrame::clearPoints() {
-    points_.clear();
+    areas_.clear();
     current_area_id_.clear();
-    updatePointList();
+    updateTree();
     Q_EMIT pointsModified();
 }
 
-void EditPointsFrame::updatePointList() {
-    points_list_->clear();
+void EditPointsFrame::updateTree() {
+    tree_widget_->clear();
 
-    for (size_t i = 0; i < points_.size(); ++i) {
-        std::stringstream ss;
-        ss << "Point " << i + 1 << " (" << points_[i].x << ", " << points_[i].y
-           << ")";
-        points_list_->addItem(ss.str().c_str());
+    for (const auto& area_pair : areas_) {
+        const AreaData& area = area_pair.second;
+
+        // 创建区域项
+        QTreeWidgetItem* area_item = new QTreeWidgetItem(tree_widget_);
+        area_item->setText(0, QString::fromStdString(area.name));
+        area_item->setFlags(area_item->flags() | Qt::ItemIsEditable);
+        area_item->setData(0, Qt::UserRole, QString::fromStdString(area.name));
+
+        // 添加点
+        for (size_t i = 0; i < area.points.size(); ++i) {
+            QTreeWidgetItem* point_item = new QTreeWidgetItem(area_item);
+            point_item->setText(0, QString("Point %1 %2")
+                .arg(i + 1)
+                .arg(formatPoint(area.points[i])));
+            point_item->setData(0, Qt::UserRole, static_cast<int>(i));
+        }
+
+        // 如果是当前选中的区域，展开它
+        if (area.name == current_area_id_) {
+            area_item->setExpanded(true);
+            tree_widget_->setCurrentItem(area_item);
+        }
     }
 
     // 更新按钮状态
-    bool has_points = !points_.empty();
-    delete_button_->setEnabled(has_points);
-    move_up_button_->setEnabled(has_points && points_list_->currentRow() > 0);
-    move_down_button_->setEnabled(has_points &&
-                                  points_list_->currentRow() <
-                                      static_cast<int>(points_.size()) - 1);
+    QTreeWidgetItem* current = tree_widget_->currentItem();
+    bool has_selection = current != nullptr;
+    bool is_point = current && current->parent() != nullptr;
+    bool can_move_up = is_point && current->parent()->indexOfChild(current) > 0;
+    bool can_move_down = is_point &&
+        current->parent()->indexOfChild(current) < current->parent()->childCount() - 1;
+
+    delete_button_->setEnabled(has_selection);
+    move_up_button_->setEnabled(can_move_up);
+    move_down_button_->setEnabled(can_move_down);
 }
 
-void EditPointsFrame::onPointSelected(int index) {
-    bool valid_index = index >= 0 && index < static_cast<int>(points_.size());
-    delete_button_->setEnabled(valid_index);
-    move_up_button_->setEnabled(valid_index && index > 0);
-    move_down_button_->setEnabled(valid_index &&
-                                  index < static_cast<int>(points_.size()) - 1);
-
-    if (valid_index) {
-        Q_EMIT pointSelected(index);
+QTreeWidgetItem* EditPointsFrame::findAreaItem(const std::string& area_id) {
+    for (int i = 0; i < tree_widget_->topLevelItemCount(); ++i) {
+        QTreeWidgetItem* item = tree_widget_->topLevelItem(i);
+        if (item->data(0, Qt::UserRole).toString().toStdString() == area_id) {
+            return item;
+        }
     }
+    return nullptr;
+}
+
+bool EditPointsFrame::isPointItem(QTreeWidgetItem* item) {
+    return item && item->parent() != nullptr;
+}
+
+int EditPointsFrame::getPointIndex(QTreeWidgetItem* item) {
+    if (!isPointItem(item)) return -1;
+    return item->data(0, Qt::UserRole).toInt();
+}
+
+void EditPointsFrame::onItemSelected(QTreeWidgetItem* item, int column) {
+    if (!item) return;
+
+    if (isPointItem(item)) {
+        // 选中了点
+        QTreeWidgetItem* area_item = item->parent();
+        current_area_id_ = area_item->data(0, Qt::UserRole).toString().toStdString();
+        int point_index = getPointIndex(item);
+        Q_EMIT pointSelected(point_index);
+    } else {
+        // 选中了区域
+        current_area_id_ = item->data(0, Qt::UserRole).toString().toStdString();
+        Q_EMIT areaSelected(current_area_id_);
+    }
+
+    // 更新按钮状态
+    bool is_point = isPointItem(item);
+    bool can_move_up = is_point && item->parent()->indexOfChild(item) > 0;
+    bool can_move_down = is_point &&
+        item->parent()->indexOfChild(item) < item->parent()->childCount() - 1;
+
+    delete_button_->setEnabled(true);
+    move_up_button_->setEnabled(can_move_up);
+    move_down_button_->setEnabled(can_move_down);
 }
 
 void EditPointsFrame::onDeleteClicked() {
-    int index = points_list_->currentRow();
-    if (index >= 0 && index < static_cast<int>(points_.size())) {
-        points_.erase(points_.begin() + index);
-        updatePointList();
-        Q_EMIT pointDeleted(index);
-        Q_EMIT pointsModified();
+    QTreeWidgetItem* item = tree_widget_->currentItem();
+    if (!item) return;
+
+    if (isPointItem(item)) {
+        // 删除点
+        QTreeWidgetItem* area_item = item->parent();
+        std::string area_id = area_item->data(0, Qt::UserRole).toString().toStdString();
+        int point_index = getPointIndex(item);
+
+        if (areas_.count(area_id)) {
+            auto& points = areas_[area_id].points;
+            if (point_index >= 0 && point_index < points.size()) {
+                points.erase(points.begin() + point_index);
+                Q_EMIT pointDeleted(point_index);
+                Q_EMIT pointsModified();
+            }
+        }
+    } else {
+        // 删除整个区域
+        std::string area_id = item->data(0, Qt::UserRole).toString().toStdString();
+        if (QMessageBox::question(this, "Confirm Delete",
+                QString("Delete area '%1' and all its points?")
+                    .arg(QString::fromStdString(area_id))) == QMessageBox::Yes) {
+            areas_.erase(area_id);
+            if (current_area_id_ == area_id) {
+                current_area_id_.clear();
+            }
+            Q_EMIT pointsModified();
+        }
     }
+
+    updateTree();
 }
 
 void EditPointsFrame::onMoveUpClicked() {
-    int index = points_list_->currentRow();
-    if (index > 0 && index < static_cast<int>(points_.size())) {
-        std::swap(points_[index], points_[index - 1]);
-        updatePointList();
-        points_list_->setCurrentRow(index - 1);
+    QTreeWidgetItem* item = tree_widget_->currentItem();
+    if (!isPointItem(item)) return;
+
+    QTreeWidgetItem* area_item = item->parent();
+    std::string area_id = area_item->data(0, Qt::UserRole).toString().toStdString();
+    int index = getPointIndex(item);
+
+    if (index > 0 && areas_.count(area_id)) {
+        auto& points = areas_[area_id].points;
+        std::swap(points[index], points[index - 1]);
         Q_EMIT pointsModified();
+        updateTree();
     }
 }
 
 void EditPointsFrame::onMoveDownClicked() {
-    int index = points_list_->currentRow();
-    if (index >= 0 && index < static_cast<int>(points_.size()) - 1) {
-        std::swap(points_[index], points_[index + 1]);
-        updatePointList();
-        points_list_->setCurrentRow(index + 1);
-        Q_EMIT pointsModified();
+    QTreeWidgetItem* item = tree_widget_->currentItem();
+    if (!isPointItem(item)) return;
+
+    QTreeWidgetItem* area_item = item->parent();
+    std::string area_id = area_item->data(0, Qt::UserRole).toString().toStdString();
+    int index = getPointIndex(item);
+
+    if (areas_.count(area_id)) {
+        auto& points = areas_[area_id].points;
+        if (index >= 0 && index < points.size() - 1) {
+            std::swap(points[index], points[index + 1]);
+            Q_EMIT pointsModified();
+            updateTree();
+        }
     }
 }
 
