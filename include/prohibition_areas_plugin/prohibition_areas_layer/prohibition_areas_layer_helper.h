@@ -2,7 +2,7 @@
 #ifndef PROHIBITION_AREAS_LAYER_HELPER_H
 #define PROHIBITION_AREAS_LAYER_HELPER_H
 
-#include <XmlRpc/XmlRpcValue.h>
+#include <xmlrpcpp/XmlRpcValue.h>
 #include <ros/ros.h>
 #include <string>
 

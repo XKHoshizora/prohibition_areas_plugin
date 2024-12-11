@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   std_srvs
   rospack
+  xmlrpcpp
 )
 
 # 查找其他依赖项
@@ -39,7 +40,7 @@ set(RESOURCES_FILES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES prohibition_areas_layer prohibition_areas_tool
-  CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack
+  CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack xmlrpcpp
   DEPENDS yaml-cpp
 )
 
