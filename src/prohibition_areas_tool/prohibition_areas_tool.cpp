@@ -54,14 +54,12 @@ void ProhibitionAreasTool::onInitialize() {
     preview_object_->setDynamic(true);
     preview_node_->attachObject(preview_object_);
 
-    // 设置点的大小
-    preview_object_->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
+    // 创建材质
     Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
         "ProhibitionAreaMaterial", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-    material->setPointSize(10);  // 设置点的大小
+    material->setPointSize(10);
     material->setAmbient(1.0, 1.0, 1.0);
     material->setDiffuse(1.0, 1.0, 1.0, 1.0);
-    preview_object_->setMaterialName(0, "ProhibitionAreaMaterial");
 
     // 设置工具光标
     setCursor(QCursor(Qt::CrossCursor));
@@ -207,9 +205,10 @@ void ProhibitionAreasTool::updatePreview() {
     }
 
     preview_node_->setVisible(true);
+    preview_object_->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
 
     // 开始绘制点和线
-    preview_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+    preview_object_->begin("ProhibitionAreaMaterial", Ogre::RenderOperation::OT_LINE_STRIP);
 
     // 设置线的颜色（绿色）
     preview_object_->colour(0.0f, 1.0f, 0.0f, 1.0f);
@@ -227,7 +226,7 @@ void ProhibitionAreasTool::updatePreview() {
     preview_object_->end();
 
     // 绘制点标记
-    preview_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST);
+    preview_object_->begin("ProhibitionAreaMaterial", Ogre::RenderOperation::OT_POINT_LIST);
     preview_object_->colour(1.0f, 0.0f, 0.0f, 1.0f); // 红色点
 
     for (const auto& point : current_points_) {
