@@ -46,7 +46,7 @@ class ProhibitionAreasTool : public rviz::Tool {
     // 更新预览显示
     void updatePreview();
     // 保存当前区域
-    void saveCurrentArea();
+    bool saveCurrentArea();
     // 添加点到当前区域
     void addPoint(const geometry_msgs::Point& point);
     // 保存区域

@@ -304,7 +304,7 @@ bool ProhibitionAreasTool::saveAreas(const std::vector<ProhibitionArea>& new_are
     return success;
 }
 
-void ProhibitionAreasTool::saveCurrentArea() {
+bool ProhibitionAreasTool::saveCurrentArea() {
     if (current_points_.size() < 3) {
         ROS_ERROR("Cannot save area: at least 3 points required");
         QMessageBox::warning(nullptr, "Error",
