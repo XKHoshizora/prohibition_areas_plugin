@@ -63,23 +63,59 @@ public:
                 XmlRpc::XmlRpcValue area_points;
                 area_points.setSize(points.size());
 
-                // 复制点数据
+                bool valid_area = true;
+                // 复制点数据，只保留x和y坐标
                 for (int j = 0; j < points.size(); ++j) {
                     XmlRpc::XmlRpcValue& point = points[j];
                     if (point.getType() != XmlRpc::XmlRpcValue::TypeArray || point.size() < 2) {
                         ROS_WARN_STREAM("Invalid point format in area " << i << ", point " << j);
-                        continue;
+                        valid_area = false;
+                        break;
                     }
-                    area_points[j] = point;
+
+                    // 创建新的只包含x,y的点
+                    XmlRpc::XmlRpcValue xy_point;
+                    xy_point.setSize(2);  // 只设置两个值：x和y
+
+                    try {
+                        // 确保转换为double类型
+                        double x = point[0].getType() == XmlRpc::XmlRpcValue::TypeInt ?
+                            static_cast<double>(static_cast<int>(point[0])) :
+                            static_cast<double>(point[0]);
+
+                        double y = point[1].getType() == XmlRpc::XmlRpcValue::TypeInt ?
+                            static_cast<double>(static_cast<int>(point[1])) :
+                            static_cast<double>(point[1]);
+
+                        xy_point[0] = x;
+                        xy_point[1] = y;
+
+                        area_points[j] = xy_point;
+
+                    } catch (const XmlRpc::XmlRpcException& e) {
+                        ROS_ERROR_STREAM("Error converting point coordinates: " << e.getMessage());
+                        valid_area = false;
+                        break;
+                    }
                 }
 
-                // 将有效的区域添加到临时向量
-                valid_areas.push_back(area_points);
+                if (valid_area) {
+                    // 将有效的区域添加到临时向量
+                    valid_areas.push_back(area_points);
 
-                // 记录区域名称到参数服务器
-                std::string area_name = area["name"];
-                std::string area_param = param + "/area_" + std::to_string(i) + "_name";
-                nhandle->setParam(area_param, area_name);
+                    // 记录区域名称到参数服务器
+                    std::string area_name = area["name"];
+                    std::string area_param = param + "/area_" + std::to_string(valid_areas.size()-1) + "_name";
+                    nhandle->setParam(area_param, area_name);
+
+                    ROS_INFO_STREAM("Successfully converted area: " << area_name <<
+                                  " with " << points.size() << " points");
+                }
+            }
+
+            if (valid_areas.empty()) {
+                ROS_ERROR("No valid areas found after conversion");
+                return false;
             }
 
             // 创建转换后的格式
@@ -92,10 +128,11 @@ public:
             // 将转换后的格式设置到参数服务器
             nhandle->setParam(converted_param, converted);
 
-            ROS_INFO_STREAM("Successfully converted " << valid_areas.size() << " prohibition areas");
+            ROS_INFO_STREAM("Successfully converted " << valid_areas.size() <<
+                          " prohibition areas with XY coordinates only");
             return true;
 
-        } catch (XmlRpc::XmlRpcException& e) {
+        } catch (const XmlRpc::XmlRpcException& e) {
             ROS_ERROR_STREAM("Error converting prohibition areas format: " << e.getMessage());
             return false;
         }
