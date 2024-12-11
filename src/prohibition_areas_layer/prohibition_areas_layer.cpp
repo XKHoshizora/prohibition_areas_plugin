@@ -34,6 +34,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  * Author: Stephan Kurzawe
+ * Modified by YIBO SUN
  *********************************************************************/
 
 #include <prohibition_areas_plugin/prohibition_areas_layer/prohibition_areas_layer.h>
@@ -76,8 +77,18 @@ void ProhibitionAreasLayer::onInitialize()
   // reading the prohibition areas out of the namespace of this plugin!
   // e.g.: "move_base/global_costmap/prohibition_layer/prohibition_areas"
   std::string params = "prohibition_areas";
-  if (!parseProhibitionListFromYaml(&nh, params))
-    ROS_ERROR_STREAM("Reading prohibition areas from '" << nh.getNamespace() << "/" << params << "' failed!");
+  // 读取参数之前先转换格式
+  if (!ProhibitionAreasHelper::convertFormat(&nh, params)) {
+      ROS_ERROR_STREAM("Failed to convert prohibition areas format!");
+      return;
+  }
+
+  // 使用转换后的参数
+  if (!parseProhibitionListFromYaml(&nh, params + "_converted"))
+      ROS_ERROR_STREAM("Reading prohibition areas from '" << nh.getNamespace()
+                      << "/" << params << "_converted' failed!");
+  // if (!parseProhibitionListFromYaml(&nh, params))
+  //   ROS_ERROR_STREAM("Reading prohibition areas from '" << nh.getNamespace() << "/" << params << "' failed!");
 
   _fill_polygons = true;
   nh.param("fill_polygons", _fill_polygons, _fill_polygons);

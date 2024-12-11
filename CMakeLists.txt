@@ -38,7 +38,7 @@ set(RESOURCES_FILES
 # 设置catkin构建信息
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES prohibition_areas_layer # prohibition_areas_tool
+  LIBRARIES prohibition_areas_layer prohibition_areas_tool
   CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack
   DEPENDS yaml-cpp
 )
@@ -91,7 +91,7 @@ target_include_directories(prohibition_areas_tool PRIVATE
 # 安装目标
 install(TARGETS
   prohibition_areas_layer
-  # prohibition_areas_tool
+  prohibition_areas_tool
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
