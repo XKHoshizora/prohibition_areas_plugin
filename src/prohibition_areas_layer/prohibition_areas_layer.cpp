@@ -73,24 +73,28 @@ void ProhibitionAreasLayer::onInitialize() {
     // reading the prohibition areas out of the namespace of this plugin!
     // e.g.: "move_base/global_costmap/prohibition_layer/prohibition_areas"
 
-    // 先尝试获取参数配置的文件路径
-    std::string custom_file_path;
-    if (nh.getParam("data_file", custom_file_path)) {
-        // 检查配置的文件是否存在
-        std::ifstream f(custom_file_path.c_str());
-        if (f.good()) {
-            ROS_INFO_STREAM("Using custom prohibition areas file: " << custom_file_path);
-            prohibition_file_path_ = custom_file_path;
-        } else {
-            ROS_WARN_STREAM("Custom file not found: " << custom_file_path << ", will use default path");
-        }
-    }
+    // 获取配置的文件路径
+    bool has_custom_path = nh.getParam("data_file", prohibition_file_path_);
 
-    // 如果没有配置文件路径或配置的文件不存在，使用默认路径
-    if (prohibition_file_path_.empty()) {
+    if (!has_custom_path) {
+        // 如果没有配置文件路径，使用默认路径
         std::string pkg_path = ros::package::getPath("prohibition_areas_plugin");
         prohibition_file_path_ = pkg_path + "/prohibition_areas/prohibition_areas.yaml";
         ROS_INFO_STREAM("Using default prohibition areas file: " << prohibition_file_path_);
+    } else {
+        ROS_INFO_STREAM("Using configured prohibition areas file: " << prohibition_file_path_);
+    }
+
+    // 检查文件是否存在
+    std::ifstream f(prohibition_file_path_.c_str());
+    if (!f.good()) {
+        ROS_WARN_STREAM("Prohibition areas file not found: " << prohibition_file_path_);
+        // 如果是用户配置的文件不存在，返回错误
+        if (has_custom_path) {
+            ROS_ERROR("Configured prohibition areas file does not exist!");
+            // 可以选择抛出异常或设置错误标志
+            return;
+        }
     }
 
     // 保存参数名

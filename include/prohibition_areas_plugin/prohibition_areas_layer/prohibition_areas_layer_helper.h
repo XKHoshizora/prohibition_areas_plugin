@@ -28,17 +28,29 @@ public:
                 return false;
             }
 
+            // 如果文件为空，设置一个空的禁区列表并返回成功
+            fin.seekg(0, std::ios::end);
+            if (fin.tellg() == 0) {
+                XmlRpc::XmlRpcValue empty_list;
+                empty_list.setSize(0);
+                nh.setParam("prohibition_areas", empty_list);
+                ROS_INFO("Using empty prohibition areas list");
+                return true;
+            }
+            fin.seekg(0, std::ios::beg);
+
             YAML::Node yaml_node = YAML::LoadFile(file_path);
             if (!yaml_node.IsSequence() && !yaml_node.IsNull()) {
                 ROS_ERROR("Invalid YAML format: root must be a sequence or empty");
                 return false;
             }
 
-            // 如果文件为空或者是一个空序列，设置一个空的禁区列表
+            // 处理空的YAML文件或空序列
             if (yaml_node.IsNull() || yaml_node.size() == 0) {
                 XmlRpc::XmlRpcValue empty_list;
                 empty_list.setSize(0);
                 nh.setParam("prohibition_areas", empty_list);
+                ROS_INFO("Using empty prohibition areas list");
                 return true;
             }
 
