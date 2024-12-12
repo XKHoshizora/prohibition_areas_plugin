@@ -106,7 +106,7 @@ public:
                     // 记录区域名称到参数服务器
                     std::string area_name = area["name"];
                     std::string area_param = param + "/area_" + std::to_string(valid_areas.size()-1) + "_name";
-                    nhandle->setParam(area_param, area_name);
+                    nhandle.setParam(area_param, area_name);
 
                     ROS_INFO_STREAM("Successfully converted area: " << area_name <<
                                   " with " << points.size() << " points");
