@@ -22,13 +22,13 @@ public:
      * 旧格式:
      * [[x1,y1], [x2,y2], ...]
      */
-    static bool convertFormat(ros::NodeHandle* nhandle, const std::string& param) {
+    static bool convertFormat(ros::NodeHandle& nhandle, const std::string& param) {
         XmlRpc::XmlRpcValue param_yaml;
         std::string converted_param = param + "_converted";
 
         try {
             // 读取原始参数
-            if (!nhandle->getParam(param, param_yaml)) {
+            if (!nhandle.getParam(param, param_yaml)) {
                 ROS_ERROR_STREAM("Cannot read " << param << " from parameter server");
                 return false;
             }
@@ -126,7 +126,7 @@ public:
             }
 
             // 将转换后的格式设置到参数服务器
-            nhandle->setParam(converted_param, converted);
+            nhandle.setParam(converted_param, converted);
 
             ROS_INFO_STREAM("Successfully converted " << valid_areas.size() <<
                           " prohibition areas with XY coordinates only");

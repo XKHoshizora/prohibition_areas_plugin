@@ -232,7 +232,7 @@ class ProhibitionAreasLayer : public costmap_2d::Layer {
     std::vector<std::vector<geometry_msgs::Point>> _prohibition_polygons;       //!< vector to save the polygons (including lines) in source coordinates
     double _min_x, _min_y, _max_x, _max_y;                                      //!< cached map bounds
 
-    ros::NodeHandle nh_;      // 添加成员变量来存储节点句柄
+    ros::NodeHandle nh;      // 添加成员变量来存储节点句柄
     std::string param_name_;  // 添加成员变量来存储参数名
     ros::Subscriber update_sub_;
 };

@@ -55,7 +55,7 @@ ProhibitionAreasLayer::~ProhibitionAreasLayer() {
 }
 
 void ProhibitionAreasLayer::onInitialize() {
-    ros::NodeHandle nh("~/" + name_);
+    nh = ros::NodeHandle("~/" + name_);
     current_ = true;
 
     _dsrv = new dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>(nh);
@@ -99,15 +99,15 @@ void ProhibitionAreasLayer::onInitialize() {
 // 专门用于加载禁区数据的函数
 bool ProhibitionAreasLayer::loadProhibitionAreas() {
     // 先转换格式
-    if (!ProhibitionAreasHelper::convertFormat(nh_, param_name_)) {
+    if (!ProhibitionAreasHelper::convertFormat(nh, param_name_)) {
         ROS_ERROR_STREAM("Failed to convert prohibition areas format!");
         return false;
     }
 
     // 使用转换后的参数
-    if (!parseProhibitionListFromYaml(nh_, param_name_ + "_converted")) {
+    if (!parseProhibitionListFromYaml(nh, param_name_ + "_converted")) {
         ROS_ERROR_STREAM("Reading prohibition areas from '"
-                         << nh_->getNamespace() << "/" << param_name_
+                         << nh->getNamespace() << "/" << param_name_
                          << "_converted' failed!");
         return false;
     }
