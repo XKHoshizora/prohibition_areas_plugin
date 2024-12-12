@@ -107,7 +107,7 @@ bool ProhibitionAreasLayer::loadProhibitionAreas() {
     // 使用转换后的参数
     if (!parseProhibitionListFromYaml(nh, param_name_ + "_converted")) {
         ROS_ERROR_STREAM("Reading prohibition areas from '"
-                         << nh->getNamespace() << "/" << param_name_
+                         << nh.getNamespace() << "/" << param_name_
                          << "_converted' failed!");
         return false;
     }
