@@ -26,6 +26,11 @@ class ViewportMouseEvent;
 class StringProperty;
 }  // namespace rviz
 
+namespace ros {
+    class Publisher;
+    class NodeHandle;
+} // namespace ros
+
 namespace prohibition_areas_tool {
 
 class EditPointsFrame;
@@ -56,6 +61,8 @@ class ProhibitionAreasTool : public rviz::Tool {
     void addPoint(const geometry_msgs::Point& point);
     // 保存区域
     bool saveAreas(const std::vector<ProhibitionArea>& areas);
+    // 发布预览数据
+    void publishPreview();
 
    private:
     // 当前编辑的区域ID
@@ -76,11 +83,10 @@ class ProhibitionAreasTool : public rviz::Tool {
     std::string save_path_;
     // 保存模式
     bool append_mode_;
-    // 预览发布器
-    ros::Publisher preview_pub_;
 
-    // 发布预览数据
-    void publishPreview();
+    // 使用智能指针管理 ROS publisher
+    struct ROSPublishers;
+    std::unique_ptr<ROSPublishers> ros_publishers_;
 };
 
 }  // end namespace prohibition_areas_tool

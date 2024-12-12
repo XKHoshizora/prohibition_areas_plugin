@@ -20,12 +20,17 @@
 
 namespace prohibition_areas_tool {
 
+struct ProhibitionAreasTool::ROSPublishers {
+    ros::Publisher preview_pub;
+};
+
 ProhibitionAreasTool::ProhibitionAreasTool()
     : Tool(),
       preview_node_(nullptr),
       preview_object_(nullptr),
       edit_frame_(nullptr),
-      drawing_(false) {
+      drawing_(false),
+      ros_publishers_(new ROSPublishers) {
     shortcut_key_ = 'p';
 
     frame_property_ = new rviz::StringProperty(
@@ -33,16 +38,7 @@ ProhibitionAreasTool::ProhibitionAreasTool()
         getPropertyContainer());
 }
 
-ProhibitionAreasTool::~ProhibitionAreasTool() {
-    delete edit_frame_;
-
-    if (preview_object_) {
-        scene_manager_->destroyManualObject(preview_object_);
-    }
-    if (preview_node_) {
-        scene_manager_->destroySceneNode(preview_node_);
-    }
-}
+ProhibitionAreasTool::~ProhibitionAreasTool() = default;
 
 void ProhibitionAreasTool::onInitialize() {
     // 获取私有节点句柄
@@ -93,7 +89,7 @@ void ProhibitionAreasTool::onInitialize() {
 
     // 初始化预览发布器
     ros::NodeHandle nh;
-    preview_pub_ = nh.advertise<prohibition_areas_plugin::ProhibitionAreas>(
+    ros_publishers_->preview_pub = nh.advertise<prohibition_areas_plugin::ProhibitionAreas>(
         "prohibition_areas_preview", 1);
 
     // 连接编辑框架的信号
@@ -129,7 +125,7 @@ void ProhibitionAreasTool::publishPreview() {
         msg.areas.push_back(current_area);
     }
 
-    preview_pub_.publish(msg);
+    ros_publishers_->preview_pub.publish(msg);
 }
 
 void ProhibitionAreasTool::activate() {
