@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <sys/stat.h>
 
 namespace prohibition_areas_tool {
 
@@ -288,28 +289,49 @@ void EditPointsFrame::onSaveClicked() {
         return;
     }
 
-    std::vector<ProhibitionArea> areas_to_save;
+    std::vector<ProhibitionArea> existing_areas;
+    // 先读取现有的禁区
+    if (boost::filesystem::exists(save_path_)) {
+        if (!ProhibitionAreasSaver::loadFromFile(existing_areas, save_path_)) {
+            ROS_WARN("Failed to load existing areas when saving");
+        }
+    }
+
+    // 更新或添加新的区域
     for (const auto& pair : areas_) {
         const AreaData& area_data = pair.second;
         if (area_data.points.size() < 3) continue;
 
-        ProhibitionArea area;
-        area.name = area_data.name;
-        area.frame_id = "map";
-        area.points = area_data.points;
-        areas_to_save.push_back(area);
+        ProhibitionArea new_area;
+        new_area.name = area_data.name;
+        new_area.frame_id = "map";
+        new_area.points = area_data.points;
+
+        // 查找是否存在同名区域
+        bool found = false;
+        for (auto& existing_area : existing_areas) {
+            if (existing_area.name == new_area.name) {
+                existing_area = new_area;  // 更新已存在的区域
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            existing_areas.push_back(new_area);  // 添加新区域
+        }
     }
 
-    if (areas_to_save.empty()) {
+    if (existing_areas.empty()) {
         QMessageBox::warning(this, tr("Warning"),
             tr("No valid areas to save."));
         return;
     }
 
-    if (ProhibitionAreasSaver::saveToFile(areas_to_save, save_path_)) {
+    if (ProhibitionAreasSaver::saveToFile(existing_areas, save_path_)) {
         QMessageBox::information(this, tr("Success"),
             tr("Prohibition areas saved successfully."));
-        Q_EMIT pointsModified();
+        Q_EMIT pointsModified();  // 发出信号通知更新
     } else {
         QMessageBox::critical(this, tr("Error"),
             tr("Failed to save prohibition areas."));

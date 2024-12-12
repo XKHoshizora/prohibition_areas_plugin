@@ -56,6 +56,23 @@ void ProhibitionAreasTool::onInitialize() {
     // 读取是否为追加模式，默认为true
     private_nh.param<bool>("append_mode", append_mode_, true);
 
+    edit_frame_ = new EditPointsFrame(save_path_);
+    connect(edit_frame_, &EditPointsFrame::pointsModified, this, [this]() {
+        areaUpdated();
+        // 触发代价地图重新加载
+        if (context_) {
+            auto manager = context_->getManager();
+            if (manager) {
+                // 发布一个标记消息，通知代价地图层重新加载
+                ros::NodeHandle nh;
+                ros::Publisher update_pub =
+                    nh.advertise<std_msgs::Empty>("prohibition_areas_update", 1);
+                std_msgs::Empty msg;
+                update_pub.publish(msg);
+            }
+        }
+    });
+
     // 创建编辑面板
     edit_frame_ = new EditPointsFrame(save_path_);  // 传递保存路径给编辑面板
     connect(edit_frame_, &EditPointsFrame::pointsModified, this,
@@ -338,16 +355,15 @@ bool ProhibitionAreasTool::saveCurrentArea() {
 
     // 保存区域
     std::vector<ProhibitionArea> areas{area};
-    if (!saveAreas(areas)) {
-        return false;
+    if (saveAreas(areas)) {
+        // 更新编辑面板
+        if (edit_frame_) {
+            edit_frame_->setAreaPoints(area.name, current_points_);
+            // 不需要显式调用 pointsModified，因为 setAreaPoints 会触发它
+        }
+        return true;
     }
-
-    // 更新编辑面板
-    if (edit_frame_) {
-        edit_frame_->setAreaPoints(area.name, current_points_);
-    }
-
-    return true;
+    return false;
 }
 
 void ProhibitionAreasTool::addPoint(const geometry_msgs::Point& point) {
