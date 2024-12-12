@@ -50,9 +50,10 @@
 #include <prohibition_areas_plugin/ProhibitionAreasLayerConfig.h>
 #include <stdlib.h>
 #include <tf/transform_datatypes.h>
-
 #include <mutex>
 #include <unordered_map>
+#include <ros/package.h>
+#include <fstream>
 
 namespace prohibition_areas_layer {
 
