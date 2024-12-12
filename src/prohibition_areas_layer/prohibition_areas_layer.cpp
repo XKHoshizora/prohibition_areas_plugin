@@ -52,14 +52,12 @@ ProhibitionAreasLayer::ProhibitionAreasLayer() : _dsrv(NULL) {}
 
 ProhibitionAreasLayer::~ProhibitionAreasLayer() {
     if (_dsrv != NULL) delete _dsrv;
-
-    if (nh_) {
-        delete nh_;
-    }
 }
 
 void ProhibitionAreasLayer::onInitialize() {
     ros::NodeHandle nh("~/" + name_);
+    nh_ = nh;  // 保存节点句柄
+
     current_ = true;
 
     _dsrv = new dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>(nh);
@@ -84,8 +82,8 @@ void ProhibitionAreasLayer::onInitialize() {
     loadProhibitionAreas();
 
     // 订阅更新消息
-    update_sub_ = nh->subscribe("/prohibition_areas_update", 1,
-                                 &ProhibitionAreasLayer::updateCallback, this);
+    update_sub_ = nh_.subscribe("/prohibition_areas_update", 1,
+                              &ProhibitionAreasLayer::updateCallback, this);
 
     // if (!parseProhibitionListFromYaml(&nh, params))
     //   ROS_ERROR_STREAM("Reading prohibition areas from '" <<

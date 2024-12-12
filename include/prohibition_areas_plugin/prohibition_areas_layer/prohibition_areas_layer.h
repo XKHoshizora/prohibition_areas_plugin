@@ -99,14 +99,14 @@ class ProhibitionAreasLayer : public costmap_2d::Layer {
 
    private:
     /**
-     * callback function for the update topic
-     */
-    void updateCallback(const std_msgs::Empty::ConstPtr& msg);
-
-    /**
      * load prohibition areas from the ros-parameter server
      */
     bool loadProhibitionAreas();
+
+    /**
+     * callback function for the update topic
+     */
+    void updateCallback(const std_msgs::Empty::ConstPtr& msg);
 
     /**
      * overlayed reconfigure callback function
