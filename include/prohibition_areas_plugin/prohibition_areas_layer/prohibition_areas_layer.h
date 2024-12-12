@@ -100,11 +100,15 @@ class ProhibitionAreasLayer : public costmap_2d::Layer {
    private:
     /**
      * load prohibition areas from the ros-parameter server
+     * 加载禁区数据
+     * @return 是否成功加载
      */
     bool loadProhibitionAreas();
 
     /**
      * callback function for the update topic
+     * 更新回调函数
+     * @param msg 空消息
      */
     void updateCallback(const std_msgs::Empty::ConstPtr& msg);
 

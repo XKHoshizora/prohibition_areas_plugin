@@ -56,8 +56,6 @@ ProhibitionAreasLayer::~ProhibitionAreasLayer() {
 
 void ProhibitionAreasLayer::onInitialize() {
     ros::NodeHandle nh("~/" + name_);
-    nh_ = nh;  // 保存节点句柄
-
     current_ = true;
 
     _dsrv = new dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>(nh);
@@ -82,7 +80,7 @@ void ProhibitionAreasLayer::onInitialize() {
     loadProhibitionAreas();
 
     // 订阅更新消息
-    update_sub_ = nh_.subscribe("/prohibition_areas_update", 1,
+    update_sub_ = nh.subscribe("/prohibition_areas_update", 1,
                               &ProhibitionAreasLayer::updateCallback, this);
 
     // if (!parseProhibitionListFromYaml(&nh, params))
@@ -99,7 +97,7 @@ void ProhibitionAreasLayer::onInitialize() {
 }
 
 // 专门用于加载禁区数据的函数
-bool loadProhibitionAreas() {
+bool ProhibitionAreasLayer::loadProhibitionAreas() {
     // 先转换格式
     if (!ProhibitionAreasHelper::convertFormat(nh_, param_name_)) {
         ROS_ERROR_STREAM("Failed to convert prohibition areas format!");
@@ -117,13 +115,13 @@ bool loadProhibitionAreas() {
     return true;
 }
 
-void updateCallback(const std_msgs::Empty::ConstPtr &msg) {
+void ProhibitionAreasLayer::updateCallback(const std_msgs::Empty::ConstPtr& msg) {
     // 加载新的禁区数据
     if (loadProhibitionAreas()) {
-        // 更新边界 - 使用类的成员变量
-        this->updateBounds(0, 0, 0, &_min_x, &_min_y, &_max_x, &_max_y);
+        // 更新边界
+        updateBounds(0, 0, 0, &_min_x, &_min_y, &_max_x, &_max_y);
         // 重新计算地图边界
-        this->computeMapBounds();
+        computeMapBounds();
     }
 }
 
