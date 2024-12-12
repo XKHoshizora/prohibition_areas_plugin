@@ -4,7 +4,9 @@
 
 #include <xmlrpcpp/XmlRpcValue.h>
 #include <ros/ros.h>
+#include <yaml-cpp/yaml.h>
 #include <string>
+#include <fstream>
 
 namespace prohibition_areas_layer
 {
@@ -12,6 +14,84 @@ namespace prohibition_areas_layer
 class ProhibitionAreasHelper
 {
 public:
+    /* Load prohibition areas from YAML file and convert to XmlRpcValue format.
+     * @param file_path: Path to the YAML file containing prohibition areas.
+     * @param nh: NodeHandle to set the prohibition areas parameter.
+     * @return True if the file was successfully loaded and converted, false otherwise.
+     */
+    static bool loadAndConvertYamlFile(const std::string& file_path, ros::NodeHandle& nh) {
+        try {
+            // 读取YAML文件
+            std::ifstream fin(file_path.c_str());
+            if (!fin.good()) {
+                ROS_ERROR_STREAM("Cannot open file: " << file_path);
+                return false;
+            }
+
+            YAML::Node yaml_node = YAML::LoadFile(file_path);
+            if (!yaml_node.IsSequence() && !yaml_node.IsNull()) {
+                ROS_ERROR("Invalid YAML format: root must be a sequence or empty");
+                return false;
+            }
+
+            // 如果文件为空或者是一个空序列，设置一个空的禁区列表
+            if (yaml_node.IsNull() || yaml_node.size() == 0) {
+                XmlRpc::XmlRpcValue empty_list;
+                empty_list.setSize(0);
+                nh.setParam("prohibition_areas", empty_list);
+                return true;
+            }
+
+            // 转换为XmlRpcValue格式
+            XmlRpc::XmlRpcValue areas;
+            areas.setSize(yaml_node.size());
+
+            for (size_t i = 0; i < yaml_node.size(); ++i) {
+                const auto& area = yaml_node[i];
+                if (!area["points"] || !area["name"]) {
+                    ROS_WARN_STREAM("Skipping area " << i << ": missing required fields");
+                    continue;
+                }
+
+                const auto& points = area["points"];
+                XmlRpc::XmlRpcValue area_points;
+                area_points.setSize(points.size());
+
+                for (size_t j = 0; j < points.size(); ++j) {
+                    const auto& point = points[j];
+                    if (!point.IsSequence() || point.size() < 2) {
+                        ROS_WARN_STREAM("Invalid point format in area " << i);
+                        continue;
+                    }
+
+                    XmlRpc::XmlRpcValue point_array;
+                    point_array.setSize(2);
+                    point_array[0] = point[0].as<double>();
+                    point_array[1] = point[1].as<double>();
+                    area_points[j] = point_array;
+                }
+
+                areas[i] = area_points;
+
+                // 保存区域名称作为额外参数
+                std::string area_name = area["name"].as<std::string>();
+                std::string area_param = "prohibition_areas/area_" + std::to_string(i) + "_name";
+                nh.setParam(area_param, area_name);
+            }
+
+            // 将转换后的数据设置到参数服务器
+            nh.setParam("prohibition_areas", areas);
+            return true;
+
+        } catch (const YAML::Exception& e) {
+            ROS_ERROR_STREAM("YAML parsing error: " << e.what());
+            return false;
+        } catch (const std::exception& e) {
+            ROS_ERROR_STREAM("Error processing prohibition areas: " << e.what());
+            return false;
+        }
+    }
+
     /**
      * 将新格式的禁区定义转换为旧格式
      * 新格式:

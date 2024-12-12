@@ -118,17 +118,15 @@ void ProhibitionAreasLayer::onInitialize() {
 
 // 专门用于加载禁区数据的函数
 bool ProhibitionAreasLayer::loadProhibitionAreas() {
-    // 先转换格式
-    if (!ProhibitionAreasHelper::convertFormat(nh, param_name_)) {
-        ROS_ERROR_STREAM("Failed to convert prohibition areas format!");
+    // 直接从文件加载并转换到参数服务器
+    if (!ProhibitionAreasHelper::loadAndConvertYamlFile(prohibition_file_path_, nh)) {
+        ROS_ERROR_STREAM("Failed to load prohibition areas from file: " << prohibition_file_path_);
         return false;
     }
 
-    // 使用转换后的参数
-    if (!parseProhibitionListFromYaml(nh, param_name_ + "_converted")) {
-        ROS_ERROR_STREAM("Reading prohibition areas from '"
-                         << nh.getNamespace() << "/" << param_name_
-                         << "_converted' failed!");
+    // 尝试从参数服务器读取转换后的数据
+    if (!parseProhibitionListFromYaml(nh, param_name_)) {
+        ROS_ERROR_STREAM("Reading prohibition areas from parameter server failed!");
         return false;
     }
 
