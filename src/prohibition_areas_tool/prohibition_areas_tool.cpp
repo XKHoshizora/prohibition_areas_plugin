@@ -61,15 +61,12 @@ void ProhibitionAreasTool::onInitialize() {
         areaUpdated();
         // 触发代价地图重新加载
         if (context_) {
-            auto manager = context_->getManager();
-            if (manager) {
-                // 发布一个标记消息，通知代价地图层重新加载
-                ros::NodeHandle nh;
-                ros::Publisher update_pub =
-                    nh.advertise<std_msgs::Empty>("prohibition_areas_update", 1);
-                std_msgs::Empty msg;
-                update_pub.publish(msg);
-            }
+            // 发布一个标记消息，通知代价地图层重新加载
+            ros::NodeHandle nh;
+            ros::Publisher update_pub =
+                nh.advertise<std_msgs::Empty>("prohibition_areas_update", 1);
+            std_msgs::Empty msg;
+            update_pub.publish(msg);
         }
     });
 

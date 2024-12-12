@@ -291,7 +291,9 @@ void EditPointsFrame::onSaveClicked() {
 
     std::vector<ProhibitionArea> existing_areas;
     // 先读取现有的禁区
-    if (boost::filesystem::exists(save_path_)) {
+    struct stat buffer;
+    bool file_exists = (stat(save_path_.c_str(), &buffer) == 0);
+    if (file_exists) {
         if (!ProhibitionAreasSaver::loadFromFile(existing_areas, save_path_)) {
             ROS_WARN("Failed to load existing areas when saving");
         }

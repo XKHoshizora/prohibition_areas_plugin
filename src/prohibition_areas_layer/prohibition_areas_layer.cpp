@@ -53,13 +53,13 @@ ProhibitionAreasLayer::ProhibitionAreasLayer() : _dsrv(NULL) {}
 ProhibitionAreasLayer::~ProhibitionAreasLayer() {
     if (_dsrv != NULL) delete _dsrv;
 
-    if (nh) {
-        delete nh;
+    if (nh_) {
+        delete nh_;
     }
 }
 
 void ProhibitionAreasLayer::onInitialize() {
-    nh = ros::NodeHandle("~/" + name_);
+    ros::NodeHandle nh("~/" + name_);
     current_ = true;
 
     _dsrv = new dynamic_reconfigure::Server<ProhibitionAreasLayerConfig>(nh);
@@ -103,15 +103,15 @@ void ProhibitionAreasLayer::onInitialize() {
 // 专门用于加载禁区数据的函数
 bool loadProhibitionAreas() {
     // 先转换格式
-    if (!ProhibitionAreasHelper::convertFormat(nh, param_name_)) {
+    if (!ProhibitionAreasHelper::convertFormat(nh_, param_name_)) {
         ROS_ERROR_STREAM("Failed to convert prohibition areas format!");
         return false;
     }
 
     // 使用转换后的参数
-    if (!parseProhibitionListFromYaml(nh, param_name_ + "_converted")) {
+    if (!parseProhibitionListFromYaml(nh_, param_name_ + "_converted")) {
         ROS_ERROR_STREAM("Reading prohibition areas from '"
-                         << nh->getNamespace() << "/" << param_name_
+                         << nh_->getNamespace() << "/" << param_name_
                          << "_converted' failed!");
         return false;
     }
@@ -120,12 +120,12 @@ bool loadProhibitionAreas() {
 }
 
 void updateCallback(const std_msgs::Empty::ConstPtr &msg) {
-    // 重新加载禁区数据
+    // 加载新的禁区数据
     if (loadProhibitionAreas()) {
-        // 更新代价地图边界
-        updateBounds(0, 0, 0, &_min_x, &_min_y, &_max_x, &_max_y);
-        // 触发完全更新
-        computeMapBounds();
+        // 更新边界 - 使用类的成员变量
+        this->updateBounds(0, 0, 0, &_min_x, &_min_y, &_max_x, &_max_y);
+        // 重新计算地图边界
+        this->computeMapBounds();
     }
 }
 
