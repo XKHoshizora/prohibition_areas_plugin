@@ -40,6 +40,62 @@ ProhibitionAreasDisplay::~ProhibitionAreasDisplay() { clear(); }
 
 void ProhibitionAreasDisplay::onInitialize() {
     scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+
+    // 订阅预览话题
+    ros::NodeHandle nh;
+    preview_sub_ = nh.subscribe("prohibition_areas_preview", 1,
+        &ProhibitionAreasDisplay::previewCallback, this);
+}
+
+void ProhibitionAreasDisplay::previewCallback(
+    const prohibition_areas_plugin::ProhibitionAreas::ConstPtr& msg) {
+
+    // 清除现有显示
+    clear();
+
+    // 获取显示属性
+    QColor color = color_property_->getColor();
+    QColor selected_color = selected_color_property_->getColor();
+    float line_width = line_width_property_->getFloat();
+    bool fill = fill_property_->getBool();
+
+    // 显示所有区域
+    for (const auto& area : msg->areas) {
+        // 创建显示对象
+        Ogre::ManualObject* manual = scene_manager_->createManualObject();
+        manual->begin("BaseWhiteNoLighting",
+            fill ? Ogre::RenderOperation::OT_TRIANGLE_FAN
+                : Ogre::RenderOperation::OT_LINE_STRIP);
+
+        // 设置颜色（正在编辑的区域使用不同颜色）
+        if (area.name == "editing") {
+            manual->colour(selected_color.redF(), selected_color.greenF(),
+                         selected_color.blueF(), fill ? 0.5f : 1.0f);
+        } else {
+            manual->colour(color.redF(), color.greenF(),
+                         color.blueF(), fill ? 0.5f : 1.0f);
+        }
+
+        // 添加顶点
+        for (const auto& point : area.points) {
+            manual->position(point.x, point.y, 0.0f);
+        }
+
+        // 闭合多边形
+        if (area.points.size() >= 3) {
+            manual->position(area.points[0].x, area.points[0].y, 0.0f);
+        }
+
+        manual->end();
+
+        // 设置渲染属性
+        if (!fill) {
+            manual->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY - 1);
+        }
+
+        scene_node_->attachObject(manual);
+        area_objects_[area.name] = manual;
+    }
 }
 
 void ProhibitionAreasDisplay::onEnable() { scene_node_->setVisible(true); }

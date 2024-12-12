@@ -4,6 +4,8 @@
 
 #include <geometry_msgs/PolygonStamped.h>
 #include <rviz/display.h>
+#include <prohibition_areas_plugin/ProhibitionArea.h>    // 添加单个禁区消息
+#include <prohibition_areas_plugin/ProhibitionAreas.h>   // 添加禁区列表消息
 
 #include <map>
 #include <string>
@@ -40,6 +42,10 @@ class ProhibitionAreasDisplay : public rviz::Display {
    private:
     void clear();
     void createGeometry();  // 更新显示函数
+    void previewCallback(const prohibition_areas_plugin::ProhibitionAreas::ConstPtr& msg);
+
+    // 预览订阅器
+    ros::Subscriber preview_sub_;
 
     // 场景节点
     Ogre::SceneNode* scene_node_;

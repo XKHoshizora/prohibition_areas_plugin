@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   rospack
   xmlrpcpp
+  message_generation
+  message_runtime
 )
 
 # 查找其他依赖项
@@ -44,11 +46,23 @@ generate_dynamic_reconfigure_options(
   config/ProhibitionAreasLayer.cfg  # 代价地图插件配置
 )
 
+add_message_files(
+  FILES
+  ProhibitionArea.msg
+  ProhibitionAreas.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+  std_msgs
+)
+
 # 设置catkin构建信息
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES prohibition_areas_layer prohibition_areas_tool
-  CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack xmlrpcpp
+  CATKIN_DEPENDS roscpp costmap_2d dynamic_reconfigure rviz geometry_msgs tf2_ros std_srvs rospack xmlrpcpp message_generation message_runtime
   DEPENDS yaml-cpp Qt5Core Qt5Widgets
 )
 
@@ -67,6 +81,7 @@ add_library(prohibition_areas_layer
 )
 add_dependencies(prohibition_areas_layer
   ${PROJECT_NAME}_gencfg
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
 )
 target_link_libraries(prohibition_areas_layer
   ${catkin_LIBRARIES}

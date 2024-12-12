@@ -90,6 +90,46 @@ void ProhibitionAreasTool::onInitialize() {
 
     // 设置工具光标
     setCursor(QCursor(Qt::CrossCursor));
+
+    // 初始化预览发布器
+    ros::NodeHandle nh;
+    preview_pub_ = nh.advertise<prohibition_areas_plugin::ProhibitionAreas>(
+        "prohibition_areas_preview", 1);
+
+    // 连接编辑框架的信号
+    connect(edit_frame_, &EditPointsFrame::pointsModified, this, [this]() {
+        publishPreview();  // 发布预览
+        areaUpdated();
+    });
+}
+
+void ProhibitionAreasTool::publishPreview() {
+    prohibition_areas_plugin::ProhibitionAreas msg;
+
+    // 获取所有区域数据
+    std::vector<ProhibitionArea> areas = edit_frame_->getAllAreas();
+
+    // 转换为消息格式
+    for (const auto& area : areas) {
+        prohibition_areas_plugin::ProhibitionArea area_msg;
+        area_msg.name = area.name;
+        area_msg.frame_id = frame_property_->getStdString();
+        area_msg.points = area.points;
+        msg.areas.push_back(area_msg);
+    }
+
+    // 添加当前正在编辑的区域
+    if (!current_points_.empty()) {
+        prohibition_areas_plugin::ProhibitionArea current_area;
+        current_area.name = "editing";
+        current_area.frame_id = frame_property_->getStdString();
+        current_area.points.insert(current_area.points.end(),
+                                 current_points_.begin(),
+                                 current_points_.end());
+        msg.areas.push_back(current_area);
+    }
+
+    preview_pub_.publish(msg);
 }
 
 void ProhibitionAreasTool::activate() {

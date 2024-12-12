@@ -37,6 +37,9 @@
   <run_depend>rospack</run_depend>
   <run_depend>xmlrpcpp</run_depend>
 
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+
   <!-- 导出插件声明 -->
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml" />

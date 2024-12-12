@@ -11,8 +11,10 @@
 #include <string>
 #include <vector>
 
-#include "edit_points_frame.h"
-#include "prohibition_areas_saver.h"
+#include <edit_points_frame.h>
+#include <prohibition_areas_saver.h>
+#include <prohibition_areas_plugin/ProhibitionArea.h>    // 添加单个禁区消息
+#include <prohibition_areas_plugin/ProhibitionAreas.h>   // 添加禁区列表消息
 
 namespace Ogre {
 class SceneNode;
@@ -74,6 +76,11 @@ class ProhibitionAreasTool : public rviz::Tool {
     std::string save_path_;
     // 保存模式
     bool append_mode_;
+    // 预览发布器
+    ros::Publisher preview_pub_;
+
+    // 发布预览数据
+    void publishPreview();
 };
 
 }  // end namespace prohibition_areas_tool

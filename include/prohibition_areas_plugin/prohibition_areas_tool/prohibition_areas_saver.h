@@ -3,6 +3,8 @@
 #define PROHIBITION_AREAS_SAVER_H
 
 #include <geometry_msgs/Point.h>
+#include <prohibition_areas_plugin/ProhibitionArea.h>    // 添加单个禁区消息
+#include <prohibition_areas_plugin/ProhibitionAreas.h>   // 添加禁区列表消息
 #include <yaml-cpp/yaml.h>
 
 #include <string>

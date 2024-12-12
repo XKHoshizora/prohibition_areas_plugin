@@ -387,4 +387,16 @@ void EditPointsFrame::onLoadClicked() {
     }
 }
 
+std::vector<ProhibitionArea> EditPointsFrame::getAllAreas() const {
+    std::vector<ProhibitionArea> result;
+    for (const auto& pair : areas_) {
+        ProhibitionArea area;
+        area.name = pair.second.name;
+        area.frame_id = "map";  // 或从配置获取
+        area.points = pair.second.points;
+        result.push_back(area);
+    }
+    return result;
+}
+
 }  // end namespace prohibition_areas_tool

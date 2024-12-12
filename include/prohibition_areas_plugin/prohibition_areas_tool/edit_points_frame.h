@@ -9,7 +9,9 @@
 #include <vector>
 #include <map>
 
-#include "prohibition_areas_saver.h"
+#include <prohibition_areas_saver.h>
+#include <prohibition_areas_plugin/ProhibitionArea.h>    // 添加单个禁区消息
+#include <prohibition_areas_plugin/ProhibitionAreas.h>   // 添加禁区列表消息
 
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -34,6 +36,8 @@ class EditPointsFrame : public QWidget {
     void setAreaPoints(const std::string& area_id,
                        const std::vector<geometry_msgs::Point>& points);
     void clearPoints();
+
+    std::vector<ProhibitionArea> getAllAreas() const;
 
    Q_SIGNALS:
     void pointSelected(int index);
