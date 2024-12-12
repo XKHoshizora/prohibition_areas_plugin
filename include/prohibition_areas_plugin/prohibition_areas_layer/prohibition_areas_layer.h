@@ -99,20 +99,6 @@ class ProhibitionAreasLayer : public costmap_2d::Layer {
 
    private:
     /**
-     * load prohibition areas from the ros-parameter server
-     * 加载禁区数据
-     * @return 是否成功加载
-     */
-    bool loadProhibitionAreas();
-
-    /**
-     * callback function for the update topic
-     * 更新回调函数
-     * @param msg 空消息
-     */
-    void updateCallback(const std_msgs::Empty::ConstPtr& msg);
-
-    /**
      * overlayed reconfigure callback function
      */
     void reconfigureCB(ProhibitionAreasLayerConfig& config, uint32_t level);
@@ -232,9 +218,24 @@ class ProhibitionAreasLayer : public costmap_2d::Layer {
     std::vector<std::vector<geometry_msgs::Point>> _prohibition_polygons;       //!< vector to save the polygons (including lines) in source coordinates
     double _min_x, _min_y, _max_x, _max_y;                                      //!< cached map bounds
 
-    ros::NodeHandle nh;      // 添加成员变量来存储节点句柄
-    std::string param_name_;  // 添加成员变量来存储参数名
-    ros::Subscriber update_sub_;
+    ros::NodeHandle nh;      // 存储节点句柄
+    std::string param_name_;  // 存储参数名
+    std::string prohibition_file_path_;  // 禁区文件路径
+    ros::Subscriber update_sub_;  // 更新订阅器
+
+    /**
+     * load prohibition areas from the ros-parameter server
+     * 加载禁区数据
+     * @return 是否成功加载
+     */
+    bool loadProhibitionAreas();
+
+    /**
+     * callback function for the update topic
+     * 更新回调函数
+     * @param msg 空消息
+     */
+    void updateCallback(const std_msgs::Empty::ConstPtr& msg);
 };
 
 }  // namespace prohibition_areas_layer

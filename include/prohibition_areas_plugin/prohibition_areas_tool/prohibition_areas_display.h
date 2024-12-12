@@ -39,7 +39,7 @@ class ProhibitionAreasDisplay : public rviz::Display {
 
    private:
     void clear();
-    void createGeometry();
+    void createGeometry();  // 更新显示函数
 
     // 场景节点
     Ogre::SceneNode* scene_node_;
