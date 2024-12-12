@@ -209,7 +209,7 @@ class ProhibitionAreasLayer : public costmap_2d::Layer {
      * @return bool       true if the parsing was successful
      *                    false if it wasn't
      */
-    bool parseProhibitionListFromYaml(ros::NodeHandle* nhandle,
+    bool parseProhibitionListFromYaml(ros::NodeHandle& nhandle,
                                       const std::string& param);
 
     /**

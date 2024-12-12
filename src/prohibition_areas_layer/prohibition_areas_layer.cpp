@@ -338,7 +338,7 @@ void ProhibitionAreasLayer::rasterizePolygon(
 
 // load prohibition positions out of the rosparam server
 bool ProhibitionAreasLayer::parseProhibitionListFromYaml(
-    ros::NodeHandle *nhandle, const std::string &param) {
+    ros::NodeHandle& nhandle, const std::string& param) {
     std::lock_guard<std::mutex> l(_data_mutex);
     std::unordered_map<std::string, geometry_msgs::Pose> map_out;
 
@@ -346,7 +346,7 @@ bool ProhibitionAreasLayer::parseProhibitionListFromYaml(
 
     bool ret_val = true;
 
-    if (nhandle->getParam(param, param_yaml)) {
+    if (nhandle.getParam(param, param_yaml)) {
         if (param_yaml.getType() ==
             XmlRpc::XmlRpcValue::TypeArray)  // list of goals
         {
